@@ -16,6 +16,7 @@ excavator scan [flags]
 - `-c` , `--concurrent <int>` : number of concurrent executions (defaults to 1), any integer given below 0 is considered as a single routine execution
 - `-p` , `--path <string>` : temporary local path to store the git repository (only applies to remote repository) (default *.*)
 - `-r` , `--rules <string>` : location of the rule declaration (default */home/ichbinfrog/.excavator/rules.yaml*)
+- `-f` , `--format <string>` : format of output result (default *html*) (currently supports `yaml`, `html`)
 
 ### Global Flags
 
