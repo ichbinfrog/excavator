@@ -5,6 +5,7 @@
 Excavator is a lightweight pure Golang git leak scanning tool based on [SAP's credential digger](https://github.com/SAP/credential-digger) (without machine learning models) which attempts to improve on performance by parallelising commit iteration.
 
 ## CLI usage
+Download a binary ![here](https://github.com/ichbinfrog/excavator/releases).
 
 ```sh
 excavator scan [flags]
