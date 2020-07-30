@@ -13,3 +13,9 @@ func TestHTMLReport(t *testing.T) {
 	s.New("https://github.com/eclipse/steady", "test", "../../resources/rules.yaml", &HTMLReport{}, false)
 	s.Scan(100)
 }
+
+func BenchmarkScan(b *testing.B) {
+	s := &Scanner{}
+	s.New("https://github.com/eclipse/steady", "test", "../../resources/rules.yaml", &HTMLReport{}, false)
+	s.Scan(100)
+}

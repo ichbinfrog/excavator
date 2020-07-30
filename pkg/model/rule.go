@@ -70,8 +70,8 @@ func (r *RuleSet) ParsePatch(patch *object.Patch, commit *object.Commit, repo *R
 				lines := strings.Split(strings.Replace(chunk.Content(), "\r\n", "\n", -1), "\n")
 				for idx, line := range lines {
 					for _, rule := range r.Rules {
-						match := rule.Compiled.FindStringSubmatchIndex(line)
-						if match != nil {
+						match := rule.Compiled.MatchString(line)
+						if match {
 							start := idx - contextSize
 							end := idx + contextSize
 							if start < 0 {
@@ -82,7 +82,6 @@ func (r *RuleSet) ParsePatch(patch *object.Patch, commit *object.Commit, repo *R
 							}
 							disc := Leak{
 								Line:     idx,
-								Col:      match[0],
 								Affected: idx - start,
 								File:     to.Path(),
 								Author:   commit.Author.Name,

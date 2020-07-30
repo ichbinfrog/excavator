@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/ichbinfrog/excavator.v2/pkg/model"
+	"github.com/ichbinfrog/excavator/pkg/model"
 	"github.com/rs/zerolog/log"
 	"github.com/schollz/progressbar/v3"
 )

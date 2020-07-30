@@ -3,7 +3,7 @@ package cmd
 import (
 	"path/filepath"
 
-	"github.com/ichbinfrog/excavator.v2/pkg/scan"
+	"github.com/ichbinfrog/excavator/pkg/scan"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 

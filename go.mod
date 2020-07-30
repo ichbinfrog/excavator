@@ -1,4 +1,4 @@
-module github.com/ichbinfrog/excavator.v2
+module github.com/ichbinfrog/excavator
 
 go 1.14
 

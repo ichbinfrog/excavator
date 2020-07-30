@@ -38,7 +38,7 @@ excavator scan {repository}
 
 ```golang
 import (
-  "github.com/ichbinfrog/excavator.v2/pkg/scan"
+  "github.com/ichbinfrog/excavator/pkg/scan"
 )
 
 func main() {

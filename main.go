@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "github.com/ichbinfrog/excavator.v2/cmd"
+import "github.com/ichbinfrog/excavator/cmd"
 
 func main() {
 	cmd.Execute()
