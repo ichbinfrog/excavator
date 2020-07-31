@@ -9,9 +9,11 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/go-git/go-git/v5/plumbing/format/diff"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/gobuffalo/packr/v2"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v2"
 )
@@ -40,14 +42,27 @@ type Rule struct {
 }
 
 func (r *RuleSet) ParseConfig(file string) {
-	data, err := ioutil.ReadFile(file)
-	if err != nil {
-		log.Fatal().
-			Str("path", file).
-			Err(err).
-			Msg("Failed to read rules definition @")
-	}
+	var data []byte
+	var err error
 
+	if file == "" {
+		box := packr.New("rules", "../../resources")
+		data, err = box.Find("rules.yaml")
+		if err != nil {
+			log.Fatal().
+				Str("path", file).
+				Err(err).
+				Msg("Failed to read static binary definition")
+		}
+	} else {
+		data, err = ioutil.ReadFile(file)
+		if err != nil {
+			log.Fatal().
+				Str("path", file).
+				Err(err).
+				Msg("Failed to read rules definition @")
+		}
+	}
 	if err := yaml.Unmarshal(data, &r); err != nil {
 		log.Fatal().
 			Str("path", file).
@@ -132,8 +147,11 @@ func (r *RuleSet) ParseFile(file string, leakChan chan FileLeak) {
 	lineNum := 0
 	for scanner.Scan() {
 		lineNum++
+		line := scanner.Text()
+		if !utf8.ValidString(line) {
+			continue
+		}
 		for _, rule := range r.Rules {
-			line := scanner.Text()
 			if rule.Compiled.MatchString(line) {
 				stat, err := fd.Stat()
 				if err != nil {

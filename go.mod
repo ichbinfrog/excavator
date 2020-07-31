@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/Masterminds/sprig/v3 v3.1.0
 	github.com/go-git/go-git/v5 v5.1.0
+	github.com/gobuffalo/packr/v2 v2.8.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/rs/zerolog v1.19.0
 	github.com/schollz/progressbar/v3 v3.3.4
