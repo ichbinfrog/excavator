@@ -10,10 +10,10 @@ Download a binary [here](https://github.com/ichbinfrog/excavator/releases).
 ```sh
 # For scanning git repository (local or remote)
 # Rules can be downloaded at resources/rules.yaml
-excavator gitScan --rules <path> [flags]
+excavator gitScan <source> [flags]
 
 # Dor scanning local directory
-excavator repoScan --rules <path> [flags]
+excavator repoScan <path> [flags]
 ```
 
 ### Flags
@@ -21,7 +21,7 @@ excavator repoScan --rules <path> [flags]
 - `-h` , `--help` : display help
 - `-c` , `--concurrent <int>` : number of concurrent executions (defaults to 1), any integer given below 0 is considered as a single routine execution
 - `-p` , `--path <string>` : temporary local path to store the git repository (only applies to remote repository) (default *.*)
-- `-r` , `--rules <string>` : location of the rule declaration (default */home/ichbinfrog/.excavator/rules.yaml*)
+- `-r` , `--rules <string>` : location of the rule declaration (defaults to `resources/rules.yaml` embedded in the binary)
 - `-f` , `--format <string>` : format of output result (default *html*) (currently supports `yaml`, `html`)
 
 ### Global Flags
