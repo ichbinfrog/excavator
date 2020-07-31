@@ -8,7 +8,11 @@ Excavator is a lightweight pure Golang git leak scanning tool based on [SAP's cr
 Download a binary ![here](https://github.com/ichbinfrog/excavator/releases).
 
 ```sh
-excavator scan [flags]
+# For scanning git repository (local or remote)
+excavator gitScan [flags]
+
+# Dor scanning local directory
+excavator repoScan
 ```
 
 ### Flags
@@ -42,7 +46,7 @@ import (
 )
 
 func main() {
-  c := &scan.Scanner{}
+  c := &scan.GitScanner{}
 
   // Directory in which to store the cloned repository
   directory := ...

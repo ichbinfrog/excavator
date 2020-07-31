@@ -1,21 +1,32 @@
 package scan
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestLocalClient(t *testing.T) {
-	s := &Scanner{}
-	s.New("https://github.com/eclipse/steady", "test", "../../resources/rules.yaml", &HTMLReport{}, false)
-	s.Scan(100)
+	g := &GitScanner{}
+	g.New("https://github.com/eclipse/steady", "test", "../../resources/rules.yaml", &HTMLReport{}, false)
+	g.Scan(100)
 }
 
 func TestHTMLReport(t *testing.T) {
-	s := &Scanner{}
-	s.New("https://github.com/eclipse/steady", "test", "../../resources/rules.yaml", &HTMLReport{}, false)
-	s.Scan(100)
+	g := &GitScanner{}
+	g.New("https://github.com/eclipse/steady", "test", "../../resources/rules.yaml", &HTMLReport{}, false)
+	g.Scan(100)
 }
 
 func BenchmarkScan(b *testing.B) {
-	s := &Scanner{}
-	s.New("https://github.com/eclipse/steady", "test", "../../resources/rules.yaml", &HTMLReport{}, false)
-	s.Scan(100)
+	conccurrent := []int{1, 5, 50, 100}
+	for _, i := range conccurrent {
+		b.Run(fmt.Sprintf("scan_%d", i), func(b *testing.B) {
+			g := &GitScanner{}
+
+			b.StartTimer()
+			g.New("https://github.com/eclipse/steady", "test", "../../resources/rules.yaml", &HTMLReport{}, false)
+			g.Scan(i)
+			b.ResetTimer()
+		})
+	}
 }

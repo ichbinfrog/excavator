@@ -1,9 +1,11 @@
 package model
 
 import (
+	"bufio"
 	"encoding/hex"
 	"hash/fnv"
 	"io/ioutil"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -21,10 +23,12 @@ const (
 )
 
 type RuleSet struct {
-	ApiVersion string `yaml:"apiVersion"`
-	Checksum   string
-	ReadAt     time.Time
-	Rules      []Rule `yaml:"rules"`
+	ApiVersion        string `yaml:"apiVersion"`
+	Checksum          string
+	ReadAt            time.Time
+	Rules             []Rule   `yaml:"rules"`
+	BlackList         []string `yaml:"black_list"`
+	BlackListCompiled []*regexp.Regexp
 }
 
 type Rule struct {
@@ -57,21 +61,33 @@ func (r *RuleSet) ParseConfig(file string) {
 	for idx, rule := range r.Rules {
 		r.Rules[idx].Compiled = regexp.MustCompile(rule.Definition)
 	}
+
+	for _, bl := range r.BlackList {
+		r.BlackListCompiled = append(r.BlackListCompiled, regexp.MustCompile(bl))
+	}
 }
 
-func (r *RuleSet) ParsePatch(patch *object.Patch, commit *object.Commit, repo *Repo, leakChan chan Leak) {
+func (r *RuleSet) ParsePatch(patch *object.Patch, commit *object.Commit, repo *Repo, leakChan chan GitLeak) {
 	for _, filePatch := range patch.FilePatches() {
+		if filePatch.IsBinary() {
+			break
+		}
 		_, to := filePatch.Files()
 		if to == nil {
 			continue
 		}
+		for _, blacklist := range r.BlackListCompiled {
+			if blacklist.MatchString(to.Path()) {
+				break
+			}
+		}
+
 		for _, chunk := range filePatch.Chunks() {
 			if chunk.Type() == diff.Add {
 				lines := strings.Split(strings.Replace(chunk.Content(), "\r\n", "\n", -1), "\n")
 				for idx, line := range lines {
 					for _, rule := range r.Rules {
-						match := rule.Compiled.MatchString(line)
-						if match {
+						if rule.Compiled.MatchString(line) {
 							start := idx - contextSize
 							end := idx + contextSize
 							if start < 0 {
@@ -80,7 +96,7 @@ func (r *RuleSet) ParsePatch(patch *object.Patch, commit *object.Commit, repo *R
 							if end >= len(lines) {
 								end = len(lines) - 1
 							}
-							disc := Leak{
+							disc := GitLeak{
 								Line:     idx,
 								Affected: idx - start,
 								File:     to.Path(),
@@ -97,6 +113,43 @@ func (r *RuleSet) ParsePatch(patch *object.Patch, commit *object.Commit, repo *R
 						}
 					}
 				}
+			}
+		}
+	}
+}
+
+func (r *RuleSet) ParseFile(file string, leakChan chan FileLeak) {
+	fd, err := os.Open(file)
+	if err != nil {
+		log.Error().
+			Str("file", file).
+			Err(err).
+			Msg("Failed to read")
+	}
+	scanner := bufio.NewScanner(fd)
+	defer fd.Close()
+
+	lineNum := 0
+	for scanner.Scan() {
+		lineNum++
+		for _, rule := range r.Rules {
+			line := scanner.Text()
+			if rule.Compiled.MatchString(line) {
+				stat, err := fd.Stat()
+				if err != nil {
+					log.Error().
+						Str("file", file).
+						Msg("Failed to fetch stat from")
+					continue
+				}
+				leakChan <- FileLeak{
+					File:     file,
+					Line:     lineNum,
+					Affected: line,
+					Rule:     &rule,
+					Size:     stat.Size(),
+				}
+				break
 			}
 		}
 	}
