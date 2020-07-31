@@ -22,25 +22,6 @@ var rootCmd = &cobra.Command{
 }
 
 func Execute() {
-	switch verbosity {
-	case 0:
-		zerolog.SetGlobalLevel(zerolog.FatalLevel)
-		break
-	case 1:
-		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
-		break
-	case 3:
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
-		break
-	case 4:
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-		break
-	case 5:
-		zerolog.SetGlobalLevel(zerolog.TraceLevel)
-		break
-	default:
-		zerolog.SetGlobalLevel(zerolog.WarnLevel)
-	}
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal().Err(err).Msg("Failed to execute command")
 	}

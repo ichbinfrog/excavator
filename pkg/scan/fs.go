@@ -74,6 +74,12 @@ func (f *FsScanner) Scan(concurrent int) {
 	start := time.Now()
 	files := f.getFiles()
 	chunkSize := len(files) / concurrent
+	if chunkSize == 0 {
+		log.Fatal().
+			Int("concurrent", concurrent).
+			Int("n_files", len(files)).
+			Msg("Amount of concurrent routines >> number of files")
+	}
 	log.Info().
 		Msg(fmt.Sprintf("Processing %d files with chunk_size = %d", len(files), chunkSize))
 

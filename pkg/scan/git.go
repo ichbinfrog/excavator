@@ -39,6 +39,12 @@ func (g *GitScanner) Scan(concurrent int) {
 
 	commits := g.Repo.FetchCommits()
 	chunkSize := len(commits) / concurrent
+	if chunkSize == 0 {
+		log.Fatal().
+			Int("concurrent", concurrent).
+			Int("n_commits", len(commits)).
+			Msg("Amount of concurrent routines >> number of commits")
+	}
 	log.Info().
 		Msg(fmt.Sprintf("Processing %d commits with chunk_size = %d", len(commits), chunkSize))
 
