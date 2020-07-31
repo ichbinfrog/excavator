@@ -101,7 +101,7 @@ rules:
     description: Phone number
 
 black_list:
-  - .*\.tar
+  - .*\.tar|zip|gz
   - .*\.sample.*
   - .*\.svg|png|jpg|jpeg
   - .*\.git.*
