@@ -44,5 +44,5 @@ black_list:
   - .*\.sample.*
   - .*\.svg|png|jpg|jpeg
   - .*\.git.*
-  - '*.exe'
-  - '*.amd64'
+  - '.*.exe'
+  - '.*.amd64'
