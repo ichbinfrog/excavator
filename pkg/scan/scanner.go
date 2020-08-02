@@ -1,15 +1,26 @@
 package scan
 
 import (
+	"sync"
+
 	"github.com/ichbinfrog/excavator/pkg/model"
-	"github.com/schollz/progressbar/v3"
 )
 
-type Scanner struct {
-	RulesPath string
+type Scanner interface {
+	Scan(concurrent int)
+	Type() string
+}
 
-	Debug       bool
-	ProgressBar *progressbar.ProgressBar
-	RuleSet     *model.RuleSet
-	Output      ReportInterface
+func leakReader(leaksChan <-chan model.Leak, doneChan <-chan bool, task *sync.WaitGroup, res [][]model.Leak, idx int) {
+	leaks := []model.Leak{}
+	for {
+		select {
+		case leak := <-leaksChan:
+			leaks = append(leaks, leak)
+		case <-doneChan:
+			res[idx] = leaks
+			task.Done()
+			break
+		}
+	}
 }

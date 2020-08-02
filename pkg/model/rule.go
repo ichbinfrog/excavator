@@ -82,7 +82,7 @@ func (r *RuleSet) ParseConfig(file string) {
 	}
 }
 
-func (r *RuleSet) ParsePatch(patch *object.Patch, commit *object.Commit, repo *Repo, leakChan chan GitLeak) {
+func (r *RuleSet) ParsePatch(patch *object.Patch, commit *object.Commit, repo *Repo, leakChan chan Leak) {
 	for _, filePatch := range patch.FilePatches() {
 		if filePatch.IsBinary() {
 			break
@@ -133,7 +133,7 @@ func (r *RuleSet) ParsePatch(patch *object.Patch, commit *object.Commit, repo *R
 	}
 }
 
-func (r *RuleSet) ParseFile(file string, leakChan chan FileLeak) {
+func (r *RuleSet) ParseFile(file string, leakChan chan Leak) {
 	fd, err := os.Open(file)
 	if err != nil {
 		log.Error().

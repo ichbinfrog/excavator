@@ -12,25 +12,33 @@ import (
 )
 
 type GitScanner struct {
-	Cache   string
-	Scanner *Scanner
-	Repo    *model.Repo
-	Result  []model.GitLeak
+	Cache     string
+	RulesPath string
+	Scanner   *Scanner
+	Repo      *model.Repo
+	Result    []model.Leak
+
+	Debug       bool
+	ProgressBar *progressbar.ProgressBar
+	RuleSet     *model.RuleSet
+	Output      ReportInterface
+}
+
+func (g GitScanner) Type() string {
+	return "git"
 }
 
 func (g *GitScanner) New(source, cache, rulespath string, output ReportInterface, debug bool) {
 	*g = GitScanner{
-		Repo:  &model.Repo{},
-		Cache: cache,
-		Scanner: &Scanner{
-			RulesPath: rulespath,
-			RuleSet:   &model.RuleSet{},
-			Debug:     debug,
-			Output:    output,
-		},
+		Repo:      &model.Repo{},
+		Cache:     cache,
+		RulesPath: rulespath,
+		RuleSet:   &model.RuleSet{},
+		Debug:     debug,
+		Output:    output,
 	}
 
-	g.Scanner.RuleSet.ParseConfig(g.Scanner.RulesPath)
+	g.RuleSet.ParseConfig(g.RulesPath)
 	g.Repo.Init(source, g.Cache)
 }
 
@@ -49,15 +57,15 @@ func (g *GitScanner) Scan(concurrent int) {
 		Msg(fmt.Sprintf("Processing %d commits with chunk_size = %d", len(commits), chunkSize))
 
 	// progress bar initialisation
-	if g.Scanner.Debug {
-		g.Scanner.ProgressBar = progressbar.Default(int64(len(commits)), " scanning commits")
+	if g.Debug {
+		g.ProgressBar = progressbar.Default(int64(len(commits)), " scanning commits")
 	}
 
 	// Divide the commit structure into equal size chunks
 	// and for each chunk launch a go routine that analyses
 	// each commit sequentially for rule breaks.
 	var wg sync.WaitGroup
-	res := make([][]model.GitLeak, concurrent+1)
+	res := make([][]model.Leak, concurrent+1)
 
 	for i := 0; i < concurrent; i++ {
 		start := i * chunkSize
@@ -65,19 +73,19 @@ func (g *GitScanner) Scan(concurrent int) {
 		if end >= len(commits) {
 			end = len(commits)
 		}
-		leakChan := make(chan model.GitLeak)
+		leakChan := make(chan model.Leak)
 		doneChan := make(chan bool)
 		wg.Add(1)
 		go g.scanChunk(start, end, commits, leakChan, doneChan)
-		go gitLeakReader(leakChan, doneChan, &wg, res, i)
+		go leakReader(leakChan, doneChan, &wg, res, i)
 	}
 	wg.Wait()
 
 	for _, chunk := range res {
 		g.Result = append(g.Result, chunk...)
 	}
-	if g.Scanner.Debug {
-		g.Scanner.ProgressBar.Clear()
+	if g.Debug {
+		g.ProgressBar.Clear()
 	}
 	log.Info().
 		Str("duration", time.Since(start).String()).
@@ -85,10 +93,10 @@ func (g *GitScanner) Scan(concurrent int) {
 	log.Info().
 		Int("potential leaks", len(g.Result)).
 		Msg("Found")
-	g.Scanner.Output.Write(g)
+	g.Output.Write(g)
 }
 
-func (g *GitScanner) scanChunk(j, e int, commits []*object.Commit, leakChan chan model.GitLeak, doneChan chan bool) {
+func (g *GitScanner) scanChunk(j, e int, commits []*object.Commit, leakChan chan model.Leak, doneChan chan bool) {
 	log.Info().
 		Int("start_commit", j).
 		Int("end_commit", e-1).
@@ -120,25 +128,11 @@ func (g *GitScanner) scanChunk(j, e int, commits []*object.Commit, leakChan chan
 		}
 		for _, ch := range changes {
 			patch, _ := ch.Patch()
-			g.Scanner.RuleSet.ParsePatch(patch, commits[j+idx+1], g.Repo, leakChan)
+			g.RuleSet.ParsePatch(patch, commits[j+idx+1], g.Repo, leakChan)
 		}
-		if g.Scanner.Debug {
-			g.Scanner.ProgressBar.Add(1)
+		if g.Debug {
+			g.ProgressBar.Add(1)
 		}
 	}
 	doneChan <- true
-}
-
-func gitLeakReader(leaksChan <-chan model.GitLeak, doneChan <-chan bool, task *sync.WaitGroup, res [][]model.GitLeak, idx int) {
-	leaks := []model.GitLeak{}
-	for {
-		select {
-		case leak := <-leaksChan:
-			leaks = append(leaks, leak)
-		case <-doneChan:
-			res[idx] = leaks
-			task.Done()
-			break
-		}
-	}
 }

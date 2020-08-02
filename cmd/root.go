@@ -6,7 +6,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -33,8 +32,6 @@ var (
 
 func init() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-	viper.AutomaticEnv()
-
 	flags := rootCmd.PersistentFlags()
 	flags.IntVarP(&verbosity, "verbosity", "v", 3, "logging verbosity (0: Fatal, 1: Error, 2: Warning, 3: Info, 4: Debug, 5: Trace)")
 	flags.StringVarP(&rules, "rules", "r", "", "location of the rule declaration (defaults to internal)")

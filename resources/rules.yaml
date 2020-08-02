@@ -6,11 +6,7 @@ rules:
 
   - definition: EAACEdEose0cBA[0-9A-Za-z]+
     category: token
-    description: facebook access token rule
-
-  - definition: AIza[0-9A-Za-z\-_]{35}
-    category: token
-    description: google token
+    description: facebook access token
 
   - definition: '[0-9]+-[0-9A-Za-z_]{32}\.apps\.googleusercontent\.com'
     category: token
@@ -20,7 +16,7 @@ rules:
     category: token
     description: amazon token
 
-  - definition: '[0-9a-fA-F]{7}.[0-9a-fA-F]{32}'
+  - definition: '[0-9a-fA-F]{7}\.[0-9a-fA-F]{32}'
     category: token
     description: instagram token
 
@@ -39,10 +35,6 @@ rules:
   - definition: '[A-Za-z0-9_]{21}--[A-Za-z0-9_]{8}'
     category: token
     description: GCP API key
-
-  - definition: '[A-Za-z0-9_]{21}--[A-Za-z0-9_]{8}'
-    category: token
-    description: GCP OAuth 2.0 key
 
   - definition: 'xox.-[0-9]{12}-[0-9]{12}-[0-9a-zA-Z]{24}'
     category: token

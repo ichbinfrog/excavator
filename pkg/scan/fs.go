@@ -13,22 +13,30 @@ import (
 )
 
 type FsScanner struct {
-	Scanner *Scanner
-	Result  []model.FileLeak
-	Root    string
+	RulesPath string
+	Root      string
+	Result    []model.Leak
+
+	Debug       bool
+	ProgressBar *progressbar.ProgressBar
+	RuleSet     *model.RuleSet
+	Output      ReportInterface
+}
+
+func (f FsScanner) Type() string {
+	return "fs"
 }
 
 func (f *FsScanner) New(root, rulespath string, output ReportInterface, debug bool) {
 	*f = FsScanner{
-		Root: root,
-		Scanner: &Scanner{RulesPath: rulespath,
-			RuleSet: &model.RuleSet{},
-			Debug:   debug,
-			Output:  output,
-		},
+		Root:      root,
+		RulesPath: rulespath,
+		RuleSet:   &model.RuleSet{},
+		Debug:     debug,
+		Output:    output,
 	}
 
-	f.Scanner.RuleSet.ParseConfig(f.Scanner.RulesPath)
+	f.RuleSet.ParseConfig(f.RulesPath)
 }
 
 func (f *FsScanner) getFiles() []string {
@@ -39,7 +47,7 @@ func (f *FsScanner) getFiles() []string {
 		if err != nil {
 			return err
 		}
-		for _, blacklist := range f.Scanner.RuleSet.BlackListCompiled {
+		for _, blacklist := range f.RuleSet.BlackListCompiled {
 			if blacklist.MatchString(path) {
 				return nil
 			}
@@ -84,15 +92,15 @@ func (f *FsScanner) Scan(concurrent int) {
 		Msg(fmt.Sprintf("Processing %d files with chunk_size = %d", len(files), chunkSize))
 
 	// progress bar initialisation
-	if f.Scanner.Debug {
-		f.Scanner.ProgressBar = progressbar.Default(int64(len(files)), " scanning files")
+	if f.Debug {
+		f.ProgressBar = progressbar.Default(int64(len(files)), " scanning files")
 	}
 
 	// Divide the commit structure into equal size chunks
 	// and for each chunk launch a go routine that analyses
 	// each commit sequentially for rule breaks.
 	var wg sync.WaitGroup
-	res := make([][]model.FileLeak, concurrent+1)
+	res := make([][]model.Leak, concurrent+1)
 
 	for i := 0; i < concurrent; i++ {
 		start := i * chunkSize
@@ -100,19 +108,19 @@ func (f *FsScanner) Scan(concurrent int) {
 		if end >= len(files) {
 			end = len(files)
 		}
-		leakChan := make(chan model.FileLeak)
+		leakChan := make(chan model.Leak)
 		doneChan := make(chan bool)
 		wg.Add(1)
 		go f.scanChunk(start, end, files, leakChan, doneChan)
-		go fileleakReader(leakChan, doneChan, &wg, res, i)
+		go leakReader(leakChan, doneChan, &wg, res, i)
 	}
 	wg.Wait()
 
 	for _, chunk := range res {
 		f.Result = append(f.Result, chunk...)
 	}
-	if f.Scanner.Debug {
-		f.Scanner.ProgressBar.Clear()
+	if f.Debug {
+		f.ProgressBar.Clear()
 	}
 	log.Info().
 		Str("duration", time.Since(start).String()).
@@ -120,33 +128,19 @@ func (f *FsScanner) Scan(concurrent int) {
 	log.Info().
 		Int("potential leaks", len(f.Result)).
 		Msg("Found")
-	f.Scanner.Output.Write(f)
+	f.Output.Write(f)
 }
 
-func (f *FsScanner) scanChunk(j, e int, files []string, leakChan chan model.FileLeak, doneChan chan bool) {
+func (f FsScanner) scanChunk(j, e int, files []string, leakChan chan model.Leak, doneChan chan bool) {
 	log.Info().
 		Int("start_file", j).
 		Int("end_file", e-1).
 		Msg("Routine launched")
 	for _, file := range files[j : e-1] {
-		f.Scanner.RuleSet.ParseFile(file, leakChan)
+		f.RuleSet.ParseFile(file, leakChan)
 	}
-	if f.Scanner.Debug {
-		f.Scanner.ProgressBar.Add(1)
+	if f.Debug {
+		f.ProgressBar.Add(1)
 	}
 	doneChan <- true
-}
-
-func fileleakReader(leaksChan <-chan model.FileLeak, doneChan <-chan bool, task *sync.WaitGroup, res [][]model.FileLeak, idx int) {
-	leaks := []model.FileLeak{}
-	for {
-		select {
-		case leak := <-leaksChan:
-			leaks = append(leaks, leak)
-		case <-doneChan:
-			res[idx] = leaks
-			task.Done()
-			break
-		}
-	}
 }

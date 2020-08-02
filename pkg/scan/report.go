@@ -3,17 +3,17 @@ package scan
 import (
 	"html/template"
 	"os"
-	"reflect"
+	"path"
 	"time"
 
 	"github.com/Masterminds/sprig"
-	"github.com/gobuffalo/packr"
+	"github.com/gobuffalo/packr/v2"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v2"
 )
 
 type ReportInterface interface {
-	Write(interface{})
+	Write(Scanner)
 }
 
 type HTMLReport struct {
@@ -35,72 +35,41 @@ func createFile(path string) *os.File {
 	return f
 }
 
-func (h *HTMLReport) Write(g interface{}) {
+func (h HTMLReport) Write(s Scanner) {
 	h.Outfile = "index.html"
 	f := createFile(h.Outfile)
 	defer f.Close()
 
-	switch v := g.(type) {
-	case *GitScanner:
-	case *FsScanner:
-		box := packr.NewBox(".")
-		report, err := box.FindString("report.gohtml")
-		if err != nil {
-			log.Fatal().Err(err).Msg("Failed to load static box")
-		}
-
-		h.Template = template.Must(template.New("report.gohtml").Funcs(
-			sprig.FuncMap(),
-		).Parse(report))
-		if err := h.Template.Execute(f, v); err != nil {
-			log.Fatal().
-				Err(err).
-				Msg("Failed to execute template")
-		}
-		// box := packr.NewBox(".")
-		// report, err := box.FindString("report_" + v.Name + ".gohtml")
-		// if err != nil {
-		// 	log.Fatal().Err(err).Msg("Failed to load static box")
-		// }
-
-		// h.Template = template.Must(template.New("report_" + v.Name + ".gohtml").Funcs(
-		// 	sprig.FuncMap(),
-		// ).Parse(report))
-		// if err := h.Template.Execute(f, v); err != nil {
-		// 	log.Fatal().
-		// 		Err(err).
-		// 		Msg("Failed to execute template")
-		// }
-		break
-	default:
-		log.Fatal().
-			Str("type", reflect.TypeOf(v).String()).
-			Msg("Failed to write report, unknown type")
+	box := packr.NewBox(".")
+	report, err := box.FindString(path.Join("static", "report.gohtml"))
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to load static box")
 	}
+
+	h.Template = template.Must(template.New("report.gohtml").Funcs(
+		sprig.FuncMap(),
+	).Parse(report))
+	if err := h.Template.Execute(f, s); err != nil {
+		log.Fatal().
+			Err(err).
+			Msg("Failed to execute template")
+	}
+
 	log.Info().
 		Str("path", h.Outfile).
 		Msg("Output has been written to")
 }
 
-func (y *YamlReport) Write(g interface{}) {
+func (y YamlReport) Write(s Scanner) {
 	y.Outfile = time.Now().Format(time.RFC3339) + ".yaml"
 	f := createFile(y.Outfile)
 	defer f.Close()
 
-	var data []byte
-	switch v := g.(type) {
-	case *GitScanner:
-	case *FsScanner:
-		data, err := yaml.Marshal(&v)
-		if err != nil || data == nil {
-			log.Fatal().
-				Err(err).
-				Msg("Unable to marshal structure to yaml")
-		}
-		break
-	default:
+	data, err := yaml.Marshal(&s)
+	if err != nil || data == nil {
 		log.Fatal().
-			Msg("Failed to write report, unknown type")
+			Err(err).
+			Msg("Unable to marshal structure to yaml")
 	}
 
 	if _, err := f.Write(data); err != nil {

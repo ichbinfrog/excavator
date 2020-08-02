@@ -131,15 +131,72 @@ input:checked + .slider:before {
 }
     </style>
   </head>
+{{- define "git" }}
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title">
+      {{ .File }}
+      <br>
+      {{ .Commit }}
+    </h5>
+    <p class="card-text">Author: {{ .Author }}    |   At: {{ .When | date "2006-01-02 15:04:05"}}</p>
+    <div class="blob-container table-responsive">
+      <table class="blob table-hover table-borderless">
+        <tbody>
+        {{- $start := . }}
+        {{- range $idx, $line := .Snippet }}
+        <tr>
+          <td class="blob-num">{{ add $idx $start.Line }}</td>
+          {{- if eq $idx $start.Affected }}
+          <td class="blob-code text-warning">
+          {{ $line }}
+          </td>
+          {{- else }}
+          <td class="blob-code">
+          {{ $line }}
+          </td>
+          {{- end }}
+        </tr>
+        {{- end }}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <hr/>
+</div>
+{{- end }}
+{{- define "fs" }}
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title">
+      {{ .File }}
+    </h5>
+    <div class="blob-container table-responsive">
+      <table class="blob table-hover table-borderless">
+        <tbody>
+        <tr>
+          <td class="blob-num">{{ .Line }}</td>
+          <td class="blob-code">
+          {{ .Affected }}
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <hr/>
+</div>
+{{- end }}
 
+{{ $scanner := . }}
 	<body>
   <div class="container-fluid">
     <div class="row parent">
-      <div class="col-md-3" id="left">
+      <div class="col-md-2" id="left">
         <div id="rules" class="text-center">
           <br/>
-          <h3><span style="font-weight: bold; font-size: 40px;" id="rule-count">{{ len .Scanner.RuleSet.Rules }}</span> active rule(s)</h3>
-          <p>Defined by {{ .Scanner.RulesPath }}<br/>last read on {{ .Scanner.RuleSet.ReadAt | date "2006-01-02 15:04:05" }}</p>
+          <h3><span style="font-weight: bold; font-size: 40px;" id="rule-count">{{ len .RuleSet.Rules }}</span> active rule(s)</h3>
+          <p>Defined by {{ .RulesPath }}<br/>last read on {{ .RuleSet.ReadAt | date "2006-01-02 15:04:05" }}</p>
           <div class="toggle-all d-flex justify-content-center">
             <button type="button" class="btn btn-primary" data-toggle="button" aria-pressed="false" autocomplete="off" onclick="enableAll()">
               Enable All
@@ -157,7 +214,7 @@ input:checked + .slider:before {
           <br/>
           <br/>
 
-          {{- with .Scanner.RuleSet }}
+          {{- with .RuleSet }}
           {{- range .Rules }}
             <div id="{{ sha1sum .Definition }}">
               <div class="card">
@@ -180,47 +237,20 @@ input:checked + .slider:before {
           {{- end }}
         </div>
       </div>
-      <div class="col-md-9" id="right">
+      <div class="col-md-10" id="right">
         <div class="leaks" id="leaks">
           <h1>Found <span style="font-weight: bold; font-size: 50px;" id="leak-count">{{ len .Result }}</span> potential credential leaks</h1>
           {{- $leaks := .Result }}
-          {{- range .Scanner.RuleSet.Rules }}
+          {{- range .RuleSet.Rules }}
             <div id="container-{{ sha1sum .Definition }}">
               {{- $rule := . }}
               {{- range $leaks }}
               {{- if eq .Rule.Definition $rule.Definition }}
-              <div class="card">
-                <div class="card-body">
-                  <h5 class="card-title">
-                    {{ .File }}
-                    <br>
-                    {{ .Commit }}
-                  </h5>
-                  <p class="card-text">Author: {{ .Author }}    |   At: {{ .When | date "2006-01-02 15:04:05"}}</p>
-                  <div class="blob-container table-responsive">
-                    <table class="blob table-hover table-borderless">
-                      <tbody>
-                      {{- $start := . }}
-                      {{- range $idx, $line := .Snippet }}
-                      <tr>
-                        <td class="blob-num">{{ add $idx $start.Line }}</td>
-                        {{- if eq $idx $start.Affected }}
-                        <td class="blob-code text-warning">
-                        {{ $line }}
-                        </td>
-                        {{- else }}
-                        <td class="blob-code">
-                        {{ $line }}
-                        </td>
-                        {{- end }}
-                      </tr>
-                      {{- end }}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                <hr/>
-              </div>
+              {{- if eq $scanner.Type "git" }}
+                {{- template "git" . }}
+              {{- else }}
+                {{- template "fs" . }}
+              {{- end }}
               {{- end }}
               {{- end }}
             </div>
