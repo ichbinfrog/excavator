@@ -3,7 +3,6 @@ package scan
 import (
 	"html/template"
 	"os"
-	"path"
 	"time"
 
 	"github.com/Masterminds/sprig"
@@ -40,8 +39,8 @@ func (h HTMLReport) Write(s Scanner) {
 	f := createFile(h.Outfile)
 	defer f.Close()
 
-	box := packr.NewBox(".")
-	report, err := box.FindString(path.Join("static", "report.gohtml"))
+	box := packr.New(".", "./static")
+	report, err := box.FindString("report.gohtml")
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to load static box")
 	}
