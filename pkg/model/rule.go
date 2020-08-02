@@ -153,19 +153,11 @@ func (r *RuleSet) ParseFile(file string, leakChan chan FileLeak) {
 		}
 		for _, rule := range r.Rules {
 			if rule.Compiled.MatchString(line) {
-				stat, err := fd.Stat()
-				if err != nil {
-					log.Error().
-						Str("file", file).
-						Msg("Failed to fetch stat from")
-					continue
-				}
 				leakChan <- FileLeak{
 					File:     file,
 					Line:     lineNum,
 					Affected: line,
 					Rule:     &rule,
-					Size:     stat.Size(),
 				}
 				break
 			}

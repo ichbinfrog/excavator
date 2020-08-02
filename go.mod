@@ -3,8 +3,11 @@ module github.com/ichbinfrog/excavator
 go 1.14
 
 require (
+	github.com/Masterminds/semver v1.5.0 // indirect
+	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/Masterminds/sprig/v3 v3.1.0
 	github.com/go-git/go-git/v5 v5.1.0
+	github.com/gobuffalo/packr v1.30.1
 	github.com/gobuffalo/packr/v2 v2.8.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/rs/zerolog v1.19.0

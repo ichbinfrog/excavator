@@ -1,20 +1,8 @@
 apiVersion: v1
 rules:
-  - definition: -----BEGIN RSA PRIVATE KEY-----
+  - definition: -----BEGIN [A-Z]+ PRIVATE KEY-----
     category: crypto_key
-    description: rsa private key
-
-  - definition: -----BEGIN EC PRIVATE KEY-----
-    category: crypto_key
-    description: ec private key
-
-  - definition: -----BEGIN PGP PRIVATE KEY BLOCK-----
-    category: crypto_key
-    description: pgp private key
-
-  - definition: -----BEGIN PRIVATE KEY-----
-    category: crypto_key
-    description: generic private key
+    description: private key
 
   - definition: EAACEdEose0cBA[0-9A-Za-z]+
     category: token
@@ -95,10 +83,6 @@ rules:
   - definition: '[0-9a-f]{32}-us[0-9]{1,2}'
     category: token
     description: MailChimp API key
-
-  - definition: '(?:^|[^0-9])(1[34578][0-9]{9})(?:$|[^0-9])'
-    category: personal
-    description: Phone number
 
 black_list:
   - .*\.tar|zip|gz
