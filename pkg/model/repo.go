@@ -11,6 +11,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// Repo represents the internal git representation
+// as well as the local one (in the filesystem)
 type Repo struct {
 	Source string `yaml:"source"`
 	Path   string
@@ -18,6 +20,7 @@ type Repo struct {
 	Storer *git.Repository
 }
 
+// Init creates a repository struct
 func (r *Repo) Init(source, cache string) {
 	r.Source = source
 
@@ -49,6 +52,7 @@ func (r *Repo) Init(source, cache string) {
 	}
 }
 
+// PlainOpen attempts to use go-git's to open a cloned repository
 func (r *Repo) PlainOpen(repoPath string) *git.Repository {
 	ref, err := git.PlainOpen(r.Path)
 	if err != nil {
@@ -60,6 +64,13 @@ func (r *Repo) PlainOpen(repoPath string) *git.Repository {
 	return ref
 }
 
+// FetchCommits stores all commits in a slice
+//
+// This allows for concurrent r/w of the commit slice
+// without having to go through go-git's commit iterator
+// object. (Comes at a certain cost to memory but the
+// commit object itself seems to be very light)
+//
 func (r *Repo) FetchCommits() []*object.Commit {
 	// Fetch repository head
 	ref, err := r.Storer.Head()

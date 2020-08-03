@@ -25,8 +25,21 @@ const (
 	contextSize = 2
 )
 
+// RuleSet groups all Rules and Parsers interpreted from the user defined file
+//
+// - Rules represent parsers that are context independant
+//   it can parse a file line by line to precisely find the leak
+// - Parsers are parsers that need the entire file as a context
+//   to analyse for leaks correctly (TODO: rename)
+//
 type RuleSet struct {
-	ApiVersion        string `yaml:"apiVersion"`
+	// Version of the configuration file
+	// Not used currently but for future proofing
+	APIVersion string `yaml:"apiVersion"`
+
+	// FNV hash of the configuration file
+	// Useful for determining whether or not the definition file
+	// has been changed. (for future uses)
 	Checksum          string
 	ReadAt            time.Time
 	Rules             []Rule           `yaml:"rules"`
@@ -35,6 +48,7 @@ type RuleSet struct {
 	BlackListCompiled []*regexp.Regexp `yaml:"-"`
 }
 
+// Rule represents a context independant parser
 type Rule struct {
 	Definition  string  `yaml:"definition"`
 	Description string  `yaml:"description,omitempty"`
@@ -43,6 +57,7 @@ type Rule struct {
 	Compiled    *regexp.Regexp
 }
 
+// ParseConfig reads the user defined configuration file
 func (r *RuleSet) ParseConfig(file string) {
 	var data []byte
 	var err error
@@ -88,6 +103,10 @@ func (r *RuleSet) ParseConfig(file string) {
 	}
 }
 
+// ParsePatch iterates over each chunk of the patch object
+// and applies all context indenpendant rules
+// TODO: allow context dependant rules
+//
 func (r *RuleSet) ParsePatch(patch *object.Patch, commit *object.Commit, repo *Repo, leakChan chan Leak) {
 	for _, filePatch := range patch.FilePatches() {
 		if filePatch.IsBinary() {
@@ -139,6 +158,7 @@ func (r *RuleSet) ParsePatch(patch *object.Patch, commit *object.Commit, repo *R
 	}
 }
 
+// ParseFile reads a given file and applies all rules given
 func (r *RuleSet) ParseFile(file string, leakChan chan Leak) {
 	fd, err := os.Open(file)
 	if err != nil {

@@ -18,7 +18,7 @@ func TestHTMLReport(t *testing.T) {
 }
 
 func BenchmarkScan(b *testing.B) {
-	conccurrent := []int{1, 5, 50, 100}
+	conccurrent := []int{50}
 	for _, i := range conccurrent {
 		b.Run(fmt.Sprintf("scan_%d", i), func(b *testing.B) {
 			g := &GitScanner{}

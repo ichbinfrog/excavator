@@ -21,12 +21,17 @@ type ContextParser interface {
 	Parse(buf *bufio.Scanner, leakChan chan Leak, file string, rule *ParserRule)
 }
 
+// ParserRule is an union of a definition of the parser
+// and it's instantiation. .Parser being the instance
+// and (.Type, .Extensions) stores the definition
 type ParserRule struct {
 	Parser     ContextParser `yaml:"-"`
 	Type       string        `yaml:"type"`
 	Extensions []string      `yaml:"extensions"`
 }
 
+// Init creates a Parser if the .Type is defined
+// TODO: Use reflect to make parsers more extensible
 func (p *ParserRule) Init() {
 	switch p.Type {
 	case "env":
