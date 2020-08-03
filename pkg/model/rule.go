@@ -167,20 +167,21 @@ func (r *RuleSet) ParseFile(file string, leakChan chan Leak) {
 			Err(err).
 			Msg("Failed to read")
 	}
-	scanner := bufio.NewScanner(fd)
+	reader := bufio.NewReader(fd)
 	defer fd.Close()
 
 	fileExtension := path.Ext(file)
 	for _, rule := range r.Parsers {
 		for _, ext := range rule.Extensions {
 			if strings.Compare(fileExtension, ext) == 0 {
-				rule.Parser.Parse(scanner, leakChan, file, &rule)
+				rule.Parser.Parse(*reader, leakChan, file, &rule)
 				return
 			}
 		}
 	}
 
 	lineNum := 0
+	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		lineNum++
 		line := scanner.Text()

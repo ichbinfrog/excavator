@@ -18,7 +18,7 @@ var (
 // that only a full file context for analysis
 // in order to search for a potential leak
 type ContextParser interface {
-	Parse(buf *bufio.Scanner, leakChan chan Leak, file string, rule *ParserRule)
+	Parse(reader bufio.Reader, leakChan chan Leak, file string, rule *ParserRule)
 }
 
 // ParserRule is an union of a definition of the parser
