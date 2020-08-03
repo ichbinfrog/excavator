@@ -83,11 +83,11 @@ parsers:
   - type: "dockerfile"
     extensions:
       - "Dockerfile"
-      
+
 black_list:
   - .*\.tar|zip|gz
   - .*\.sample.*
-  - .*\.svg|png|jpg|jpeg
+  - .*\.svg|png|jpg|jpeg|pdf
   - .*\.git.*
   - '.*.exe'
   - '.*.amd64'
