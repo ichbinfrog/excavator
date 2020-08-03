@@ -70,65 +70,6 @@ a,a:hover {
   cursor: inherit;
 }
 
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 34px;
-}
-
-.switch input { 
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  -webkit-transition: .4s;
-  transition: .4s;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 26px;
-  width: 26px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  -webkit-transition: .4s;
-  transition: .4s;
-}
-
-input:checked + .slider {
-  background-color: #2196F3;
-}
-
-input:focus + .slider {
-  box-shadow: 0 0 1px #2196F3;
-}
-
-input:checked + .slider:before {
-  -webkit-transform: translateX(26px);
-  -ms-transform: translateX(26px);
-  transform: translateX(26px);
-}
-
-.slider.round {
-  border-radius: 34px;
-}
-
-.slider.round:before {
-  border-radius: 50%;
-}
-
 .leaks {
   margin: 5%;
 }
@@ -140,6 +81,10 @@ input:checked + .slider:before {
 .slider:hover:before{
   opacity: 0.8;
 }
+
+.badge-pill {
+  padding-right: 4px;
+}
     </style>
   </head>
 {{- define "git" }}
@@ -149,7 +94,7 @@ input:checked + .slider:before {
       {{ .File }}
       <br>
       {{ .Commit }}
-    </h5>
+    <span class="badge badge-danger badge-pill">regexp rule</span></h5>
     <p class="card-text">Author: {{ .Author }}    |   At: {{ .When | date "2006-01-02 15:04:05"}}</p>
     <div class="blob-container table-responsive">
       <table class="blob table-hover table-borderless">
@@ -183,6 +128,11 @@ input:checked + .slider:before {
   <div class="card-body">
     <h5 class="card-title">
       {{ .File }}
+    {{- if .Parser }}    
+    <span class="badge badge-warning badge-pill">parser rule</span>
+    {{- else }}
+    <span class="badge badge-danger badge-pill">regexp rule</span>
+    {{- end }}
     </h5>
     <div class="blob-container table-responsive">
       <table class="blob table-hover table-borderless">
@@ -205,52 +155,116 @@ input:checked + .slider:before {
 	<body>
   <div class="container-fluid">
     <div class="row parent">
-      <div class="col-md-2" id="left">
-        <div id="rules" class="text-center">
-          <br/>
-          <h3><span style="font-weight: bold; font-size: 40px;" id="rule-count">{{ len .RuleSet.Rules }}</span> active rule(s)</h3>
-          <p>Defined by {{ .RulesPath }}<br/>last read on {{ .RuleSet.ReadAt | date "2006-01-02 15:04:05" }}</p>
-          <div class="toggle-all d-flex justify-content-center">
-            <button type="button" class="btn btn-primary" data-toggle="button" aria-pressed="false" autocomplete="off" onclick="enableAll()">
-              Enable All
-            </button>
-            &nbsp;
-            <button type="button" class="btn btn-primary" data-toggle="button" aria-pressed="false" autocomplete="off" onclick="disableAll()">
-              Disable All
-            </button>
+      <div class="col-sm-2" id="left">
+        <nav>
+          <div class="nav nav-tabs" id="nav-tab" role="tablist">
+            <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#nav-regex" role="tab" aria-controls="nav-home" aria-selected="true">Regex Rules</a>
+            <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#nav-parser" role="tab" aria-controls="nav-profile" aria-selected="false">Parser Rules</a>
           </div>
-          <hr/>
-          {{- with .RuleSet }}
-          {{- range .Rules }}
-            <div id="{{ sha1sum .Definition }}">
+        </nav>
+        <div class="tab-content" id="nav-tabContent">
+          <div class="tab-pane fade show active" id="nav-regex" role="tabpanel" aria-labelledby="nav-home-tab">
+          <div id="rules" class="text-center">
+            <br/>
+            <h3><span style="font-weight: bold; font-size: 40px;" id="rule-count">{{ len .RuleSet.Rules }}</span> active rule(s)</h3>
+            <p>Defined by {{ .RulesPath }}<br/>last read on {{ .RuleSet.ReadAt | date "2006-01-02 15:04:05" }}</p>
+            <div class="toggle-all d-flex justify-content-center">
+              <button type="button" class="btn btn-primary" data-toggle="button" autocomplete="off" onclick="enableAllRules()">
+                Enable All
+              </button>
+              &nbsp;
+              <button type="button" class="btn btn-primary" data-toggle="button" autocomplete="off" onclick="disableAllRules()">
+                Disable All
+              </button>
+            </div>
+            <hr/>
+            <div id="accordionRule">
+            {{- if .RuleSet }}
+            {{- range $idx, $rule := .RuleSet.Rules }}
+              {{ $checksum := sha1sum .Definition }}
               <div class="card">
-                <div class="card-body">
-                  <h5 class="card-title">{{ .Description }}</h5>
-                  <p class="card-text">{{ default "" .Category }}</p>
-                  <samp>{{ .Definition }}</samp>
-                  <br/>
-                  <div class="container-fluid" style="text-align:center; padding-top: 5px;">
-                    <label class="switch">
-                      <input type="checkbox" name="checkbox" id="checkbox-{{ sha1sum .Definition}}" onclick="toggle({{ sha1sum .Definition }})" checked/>
-                      <span class="slider"></span>
-                    </label>
+                <div class="card-header" id="headingRule{{ $idx }}">
+                  <div class="row">
+                    <div class="col-sm-2 d-flex align-items-center">
+                      <input type="checkbox" class="rule" name="checkbox" id="checkbox-{{ $checksum }}" onclick="toggleRule({{ $checksum }})" checked/>
+                    </div>
+                    <div class="col-sm-10 d-flex justify-content-between align-items-center">
+                    <button class="btn btn-block" data-toggle="collapse" data-target="#collapseRule{{ $idx }}" aria-expanded="true" aria-controls="collapseRule{{ $idx }}">
+                      {{ $rule.Description }}&nbsp;&nbsp;<span class="badge" data-count="{{ $checksum }}" id="badge-{{ $checksum }}">0</span>
+                    </button>
+                    </div>
                   </div>
                 </div>
-                <hr/>
+                <div id="collapseRule{{ $idx }}" class="collapse" aria-labelledby="headingRule{{ $idx }}" data-parent="#accordionRule">
+                  <div class="card-body">
+                    <p class="card-text">{{ default "" $rule.Category }}</p>
+                    <samp>{{ $rule.Definition }}</samp>
+                    <br/>
+                  </div>
+                </div>
               </div>
+            {{- end }}
+            {{- end }}
             </div>
-          {{- end }}
-          {{- end }}
+            </div>
+          </div>
+          <div class="tab-pane fade" id="nav-parser" role="tabpanel" aria-labelledby="nav-profile-tab">
+            <div id="parsers" class="text-center">
+              <br/>
+              <h3><span style="font-weight: bold; font-size: 40px;" id="parser-count">{{ len .RuleSet.Parsers }}</span> active parser(s)</h3>
+              <p>Defined by {{ .RulesPath }}<br/>last read on {{ .RuleSet.ReadAt | date "2006-01-02 15:04:05" }}</p>
+              <div class="toggle-all d-flex justify-content-center">
+                <button type="button" class="btn btn-primary" data-toggle="button" autocomplete="off" onclick="enableAllParsers()">
+                  Enable All
+                </button>
+                &nbsp;
+                <button type="button" class="btn btn-primary" data-toggle="button" autocomplete="off" onclick="disableAllParsers()">
+                  Disable All
+                </button>
+              </div>
+              <hr/>
+              <div id="accordionParser">
+                {{- if .RuleSet.Parsers }}
+                {{- range $idx, $parser := .RuleSet.Parsers }}
+                  {{ $checksum := sha1sum .Type }}
+                  <div class="card">
+                    <div class="card-header" id="headingParser{{ $idx }}">
+                      <div class="row">
+                        <div class="col-sm-2 d-flex align-items-center">
+                          <input type="checkbox" class="parser" name="checkbox" id="checkbox-parser-{{ $checksum }}" onclick="toggleParser({{ $checksum }})" checked/>
+                        </div>
+                        <div class="col-sm-10 d-flex justify-content-between align-items-center">
+                        <button class="btn btn-block" data-toggle="collapse" data-target="#collapseParser{{ $idx }}" aria-expanded="true" aria-controls="collapseParser{{ $idx }}">
+                          {{ $parser.Type }}&nbsp;&nbsp;<span class="badge" data-count="{{ $checksum }}" id="badge-{{ $checksum }}">0</span>
+                        </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div id="collapseParser{{ $idx }}" class="collapse" aria-labelledby="headingParser{{ $idx }}" data-parent="#accordionParser">
+                      <div class="card-body">
+                        <p class="card-text">Extensions:  {{ default "" $parser.Extensions }}</p>
+                        <br/>
+                      </div>
+                    </div>
+                  </div>
+                {{- end }}
+                {{- end }}
+                </div>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="col-md-10" id="right">
+      <div class="col" id="right">
         <div class="leaks" id="leaks">
           <h1>Found <span style="font-weight: bold; font-size: 50px;" id="leak-count">{{ len .Result }}</span> potential credential leaks</h1>
           {{- $leaks := .Result }}
+          {{- if .RuleSet }}
+          {{- if .RuleSet.Rules }}
           {{- range .RuleSet.Rules }}
-            <div id="container-{{ sha1sum .Definition }}">
+            <div id="container-{{ sha1sum .Definition }}" data-leaktype="rule">
               {{- $rule := . }}
               {{- range $leaks }}
+              {{- if .Rule }}
               {{- if eq .Rule.Definition $rule.Definition }}
               {{- if eq $scanner.Type "git" }}
                 {{- template "git" . }}
@@ -259,14 +273,75 @@ input:checked + .slider:before {
               {{- end }}
               {{- end }}
               {{- end }}
+              {{- end }}
             </div>
+          {{- end }}
+          {{- end }}
+          {{- if .RuleSet.Parsers }}
+          {{- range .RuleSet.Parsers }}
+            <div id="container-{{ sha1sum .Type }}" data-leaktype="parser">
+              {{- $parser := . }}
+              {{- range $leaks }}
+              {{- if .Parser }}
+              {{- if eq .Parser.Type $parser.Type }}
+              {{- if eq $scanner.Type "fs" }}
+                {{- template "fs" . }}
+              {{- end }}
+              {{- end }}
+              {{- end }}
+              {{- end }}
+            </div>
+          {{- end }}
+          {{- end }}
           {{- end }}
         </div>
       </div>
     </div>
   </div>
   <script>
-    function toggle(checksum) {
+    function computeCount() {
+      let targets = document.querySelectorAll("span.badge");
+      targets.forEach((target) => {
+        let container = document.getElementById("container-"+target.dataset.count);
+        let count = Array.from(container.children).filter(el => {
+          return el.tagName == "DIV" 
+        }).length;
+        target.innerHTML = count;
+        if (count == 0) {
+          target.classList.add("badge-light");
+        } else {
+          target.classList.add("badge-primary");
+        }
+      })
+    };
+    computeCount();
+
+    function toggleParser(checksum) {
+      let check = document.getElementById("checkbox-parser-"+checksum);
+      let target = document.getElementById("container-"+checksum);
+      let leakCount = document.getElementById("leak-count");
+      let parserCount = document.getElementById("parser-count");
+      if (check.checked) {
+        target.style.display = "block";
+      } else {
+        target.style.display = "none";
+      }
+      let leaks = document.getElementById("leaks").children;
+      let allLeaks = Array.from(leaks).filter(el => {
+        return el.tagName == "DIV" && el.style.display != "none";
+      });
+      let totalLeak = 0;
+      for (let leak of allLeaks) {
+        totalLeak += +leak.children.length;
+      }
+      let activeLeaks = allLeaks.filter(el => {
+        return el.dataset.leaktype == "parser";
+      });
+      parserCount.innerHTML = activeLeaks.length;
+      leakCount.innerHTML = totalLeak;
+    };
+  
+    function toggleRule(checksum) {
       let check = document.getElementById("checkbox-"+checksum);
       let target = document.getElementById("container-"+checksum);
       let leakCount = document.getElementById("leak-count");
@@ -277,31 +352,46 @@ input:checked + .slider:before {
         target.style.display = "none";
       }
       let leaks = document.getElementById("leaks").children;
-      let activeLeaks = Array.from(leaks).filter(el => {
-        if (el.tagName == "DIV") {
-          return el.style.display != "none";
-        }
-        return false;
+      let allLeaks = Array.from(leaks).filter(el => {
+        return el.tagName == "DIV" && el.style.display != "none";
       });
-
       let totalLeak = 0;
-      for (let leak of activeLeaks) {
+      for (let leak of allLeaks) {
         totalLeak += +leak.children.length;
       }
+      let activeLeaks = allLeaks.filter(el => {
+        return el.dataset.leaktype == "rule";
+      });
       ruleCount.innerHTML = activeLeaks.length;
       leakCount.innerHTML = totalLeak;
     };
 
-    function enableAll() {
-      let checkboxes = document.querySelectorAll('input[type=checkbox]');
+    function enableAllRules() {
+      let checkboxes = document.querySelectorAll('input.rule[type=checkbox]');
       for (let checkbox of checkboxes) {
         checkbox.checked = false;
         checkbox.click();
       }
     }
 
-    function disableAll() {
-      let checkboxes = document.querySelectorAll('input[type=checkbox]');
+    function disableAllRules() {
+      let checkboxes = document.querySelectorAll('input.rule[type=checkbox]');
+      for (let checkbox of checkboxes) {
+        checkbox.checked = true;
+        checkbox.click();
+      }
+    }
+
+    function enableAllParsers() {
+      let checkboxes = document.querySelectorAll('input.parser[type=checkbox]');
+      for (let checkbox of checkboxes) {
+        checkbox.checked = false;
+        checkbox.click();
+      }
+    }
+
+    function disableAllParsers() {
+      let checkboxes = document.querySelectorAll('input.parser[type=checkbox]');
       for (let checkbox of checkboxes) {
         checkbox.checked = true;
         checkbox.click();

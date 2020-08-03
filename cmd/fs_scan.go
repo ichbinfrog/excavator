@@ -9,7 +9,7 @@ import (
 )
 
 var fsScanCmd = &cobra.Command{
-	Use:   "fsScan",
+	Use:   "fs",
 	Short: "scan a directory in the filesystem",
 	Long: `Command to scan a local directory in the filesystem.
 Will loop through each file to verify for possible password,

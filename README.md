@@ -10,10 +10,10 @@ Download a binary [here](https://github.com/ichbinfrog/excavator/releases).
 ```sh
 # For scanning git repository (local or remote)
 # Rules can be downloaded at resources/rules.yaml
-excavator gitScan <source> [flags]
+excavator git <source> [flags]
 
 # Dor scanning local directory
-excavator repoScan <path> [flags]
+excavator fs <path> [flags]
 ```
 
 ### Flags
@@ -92,4 +92,17 @@ rules:
 # list of regexes of file to ignore
 black_list:
   - '.*sample.*'
+
+# list of parsers
+# parsers are rules that require additional context for analysing
+# for potential leaks with more precision
+#
+# currently supports "env" and "dockerfile" 
+parsers:
+  - type: "env" 
+    extensions:
+      - ".env" 
+  - type: "dockerfile"
+    extensions:
+      - "Dockerfile"
 ```

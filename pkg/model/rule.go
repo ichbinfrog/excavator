@@ -6,6 +6,7 @@ import (
 	"hash/fnv"
 	"io/ioutil"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -28,9 +29,10 @@ type RuleSet struct {
 	ApiVersion        string `yaml:"apiVersion"`
 	Checksum          string
 	ReadAt            time.Time
-	Rules             []Rule   `yaml:"rules"`
-	BlackList         []string `yaml:"black_list"`
-	BlackListCompiled []*regexp.Regexp
+	Rules             []Rule           `yaml:"rules"`
+	Parsers           []ParserRule     `yaml:"parsers"`
+	BlackList         []string         `yaml:"black_list"`
+	BlackListCompiled []*regexp.Regexp `yaml:"-"`
 }
 
 type Rule struct {
@@ -79,6 +81,10 @@ func (r *RuleSet) ParseConfig(file string) {
 
 	for _, bl := range r.BlackList {
 		r.BlackListCompiled = append(r.BlackListCompiled, regexp.MustCompile(bl))
+	}
+
+	for idx := range r.Parsers {
+		r.Parsers[idx].Init()
 	}
 }
 
@@ -143,6 +149,16 @@ func (r *RuleSet) ParseFile(file string, leakChan chan Leak) {
 	}
 	scanner := bufio.NewScanner(fd)
 	defer fd.Close()
+
+	fileExtension := path.Ext(file)
+	for _, rule := range r.Parsers {
+		for _, ext := range rule.Extensions {
+			if strings.Compare(fileExtension, ext) == 0 {
+				rule.Parser.Parse(scanner, leakChan, file, &rule)
+				return
+			}
+		}
+	}
 
 	lineNum := 0
 	for scanner.Scan() {

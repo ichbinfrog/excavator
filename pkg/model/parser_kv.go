@@ -1,4 +1,4 @@
-package parser
+package model
 
 import (
 	"bufio"
@@ -7,9 +7,10 @@ import (
 )
 
 type pair struct {
-	line    int
-	value   []byte
-	threats int
+	line     int
+	value    []byte
+	threats  int
+	affected []byte
 }
 
 // KVParser is the base parser structure for a key value file
@@ -41,7 +42,7 @@ func NewKVParser(keyRegexp, equal, valRegexp, varRegexp string, bag []string) *K
 }
 
 // Parse reads file line by line to scan the KV file
-func (k *KVParser) Parse(buf *bufio.Scanner) {
+func (k *KVParser) Parse(buf *bufio.Scanner, leakChan chan Leak, file string, rule *ParserRule) {
 	lineNum := 0
 	for buf.Scan() {
 		lineNum++
@@ -51,8 +52,9 @@ func (k *KVParser) Parse(buf *bufio.Scanner) {
 			continue
 		}
 		k.Pairs[string(match[1])] = pair{
-			value: match[2],
-			line:  lineNum,
+			value:    match[2],
+			line:     lineNum,
+			affected: line,
 		}
 	}
 	for key, pair := range k.Pairs {
@@ -71,9 +73,15 @@ func (k *KVParser) Parse(buf *bufio.Scanner) {
 			}
 		}
 	}
-	for key, pair := range k.Pairs {
+	for _, pair := range k.Pairs {
 		if pair.threats != 0 {
-			delete(k.Pairs, key)
+			leakChan <- FileLeak{
+				File:     file,
+				Line:     pair.line,
+				Affected: string(pair.affected),
+				Threat:   pair.threats,
+				Parser:   rule,
+			}
 		}
 	}
 }

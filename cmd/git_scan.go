@@ -9,7 +9,7 @@ import (
 )
 
 var gitScanCmd = &cobra.Command{
-	Use:   "gitScan",
+	Use:   "git",
 	Short: "scan a git repository",
 	Long: `Command to scan a local or remote git repository.
 Will loop through each commit to verify for possible password,
