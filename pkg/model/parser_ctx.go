@@ -37,13 +37,13 @@ type CtxParserRule struct {
 func (c *CtxParserRule) Init() {
 	switch c.Type {
 	case "env":
-		c.Parser = NewEnvParser(bag)
+		c.Parser = NewEnvParser(&bag)
 		break
 	case "dockerfile":
-		c.Parser = NewDockerFileParser(bag)
+		c.Parser = NewDockerFileParser(&bag)
 		break
 	case "properties":
-		c.Parser = NewPropertiesParser(bag)
+		c.Parser = NewPropertiesParser(&bag)
 		break
 	default:
 		log.Fatal().

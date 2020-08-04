@@ -27,18 +27,17 @@ type pair struct {
 type KVParser struct {
 	Pairs      map[string]pair
 	KeyBag     *[]string
-	ValueBag   *[]string
 	Threshold  float32
 	Matcher    *regexp.Regexp
 	VarMatcher *regexp.Regexp
 }
 
 // NewKVParser returns a new KV file leak parser
-func NewKVParser(keyRegexp, equal, valRegexp, varRegexp string, bag []string) *KVParser {
+func NewKVParser(keyRegexp, equal, valRegexp, varRegexp string, bag *[]string) *KVParser {
 	return &KVParser{
 		Matcher:    regexp.MustCompile(keyRegexp + equal + valRegexp),
 		VarMatcher: regexp.MustCompile(varRegexp),
-		KeyBag:     &bag,
+		KeyBag:     bag,
 		Pairs:      make(map[string]pair),
 	}
 }
@@ -112,7 +111,7 @@ func (k *KVParser) parseVariable(value []byte) int {
 }
 
 // NewEnvParser returns a new environ file leak parser
-func NewEnvParser(keyBag []string) *KVParser {
+func NewEnvParser(keyBag *[]string) *KVParser {
 	return NewKVParser(
 		`([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,})`,
 		`=`,
@@ -125,7 +124,7 @@ func NewEnvParser(keyBag []string) *KVParser {
 // NewDockerFileParser returns a new dockerfile leak parser
 // this comes from the asumption that some ENV declarations
 // can be left in the file during developpement cycles
-func NewDockerFileParser(keyBag []string) *KVParser {
+func NewDockerFileParser(keyBag *[]string) *KVParser {
 	return NewKVParser(
 		`(ENV|ARGS)\s+([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,})`,
 		`=?`,
@@ -136,7 +135,7 @@ func NewDockerFileParser(keyBag []string) *KVParser {
 }
 
 // NewPropertiesParser returns a new .properties leak parser
-func NewPropertiesParser(keyBag []string) *KVParser {
+func NewPropertiesParser(keyBag *[]string) *KVParser {
 	return NewKVParser(
 		`([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,})\s*`,
 		`=`,

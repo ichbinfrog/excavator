@@ -26,9 +26,9 @@ const (
 
 // RuleSet groups all Rules and Parsers interpreted from the user defined file
 //
-// - CtxParsers represent parsers that are context independant
+// - Rules represent parsers that are context independant
 //   it can parse a file line by line to precisely find the leak
-// - IndepParsers are parsers that need the entire file as a context
+// - Parsers are parsers that need the entire file as a context
 //   to analyse for leaks correctly (TODO: rename)
 //
 type RuleSet struct {
@@ -45,15 +45,6 @@ type RuleSet struct {
 	CtxParsers        []CtxParserRule   `yaml:"parsers"`
 	BlackList         []string          `yaml:"black_list"`
 	BlackListCompiled []*regexp.Regexp  `yaml:"-"`
-}
-
-// IndepParserRule represents a context independant parser
-type IndepParserRule struct {
-	Definition  string  `yaml:"definition"`
-	Description string  `yaml:"description,omitempty"`
-	Category    string  `yaml:"category,omitempty"`
-	Weight      float32 `yaml:"weight"`
-	Compiled    *regexp.Regexp
 }
 
 // ParseConfig reads the user defined configuration file
