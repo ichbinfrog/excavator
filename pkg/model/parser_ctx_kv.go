@@ -43,9 +43,9 @@ func NewKVParser(keyRegexp, equal, valRegexp, varRegexp string, bag *[]string) *
 }
 
 // Parse reads file line by line to scan the KV file
-func (k *KVParser) Parse(reader bufio.Reader, leakChan chan Leak, file string, rule *CtxParserRule) {
+func (k *KVParser) Parse(reader *bufio.Reader, leakChan chan Leak, file string, rule *CtxParserRule) {
 	lineNum := 0
-	buf := bufio.NewScanner(&reader)
+	buf := bufio.NewScanner(reader)
 	for buf.Scan() {
 		lineNum++
 		line := buf.Bytes()

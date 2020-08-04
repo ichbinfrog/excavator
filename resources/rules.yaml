@@ -24,14 +24,6 @@ rules:
     category: token
     description: twitter access token
 
-  - definition: '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
-    category: token
-    description: heroku OAuth 2.0 key
-
-  - definition: '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
-    category: token
-    description: heroku API key
-
   - definition: '[A-Za-z0-9_]{21}--[A-Za-z0-9_]{8}'
     category: token
     description: GCP API key
@@ -60,12 +52,27 @@ parsers:
   - type: "env"
     extensions:
       - ".env" 
+    keys:
+      - "pass"
+      - "host"
+      - "proxy"
+      - "key"
   - type: "dockerfile"
     extensions:
       - "Dockerfile"
+    keys:
+      - "pass"
+      - "host"
+      - "proxy"
+      - "key"
   - type: "properties"
     extensions:
       - ".properties"
+    keys:
+      - "pass"
+      - "host"
+      - "proxy"
+      - "key"
 
 black_list:
   - .*\.tar|zip|gz

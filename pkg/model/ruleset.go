@@ -161,7 +161,7 @@ func (r *RuleSet) ParseFile(file string, leakChan chan Leak) {
 	for _, rule := range r.CtxParsers {
 		for _, ext := range rule.Extensions {
 			if strings.HasSuffix(file, ext) {
-				rule.Parser.Parse(*reader, leakChan, file, &rule)
+				rule.Parser.Parse(reader, leakChan, file, &rule)
 				return
 			}
 		}

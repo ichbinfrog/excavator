@@ -102,7 +102,21 @@ parsers:
   - type: "env" 
     extensions:
       - ".env" 
+
+    # the parser uses theses values to check if the key in the <key> = <value>
+    # form contains potential leaks 
+    keys:               
+      - "pass"
+      - "host"
+      - "proxy"
+      - "key"
+
   - type: "dockerfile"
     extensions:
       - "Dockerfile"
+    keys:
+      - "pass"
+      - "host"
+      - "proxy"
+      - "key"
 ```
