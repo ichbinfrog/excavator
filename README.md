@@ -114,9 +114,6 @@ parsers:
   - type: "dockerfile"
     extensions:
       - "Dockerfile"
-    keys:
-      - "pass"
-      - "host"
-      - "proxy"
-      - "key"
+    # keys defaults to 
+    # ["pass", "host", "proxy", "key"] if not defined
 ```

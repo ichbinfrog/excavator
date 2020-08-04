@@ -27,6 +27,15 @@ type CtxParserRule struct {
 // TODO: Use reflect to make parsers more extensible
 //
 func (c *CtxParserRule) Init() {
+	if c.KeyBag == nil {
+		c.KeyBag = []string{
+			"pass",
+			"host",
+			"proxy",
+			"key",
+		}
+	}
+
 	switch c.Type {
 	case "env":
 		c.Parser = NewEnvParser(&c.KeyBag)
@@ -36,6 +45,9 @@ func (c *CtxParserRule) Init() {
 		break
 	case "properties":
 		c.Parser = NewPropertiesParser(&c.KeyBag)
+		break
+	case "shell":
+		c.Parser = NewShParser(&c.KeyBag)
 		break
 	default:
 		log.Fatal().

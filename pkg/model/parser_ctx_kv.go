@@ -144,3 +144,14 @@ func NewPropertiesParser(keyBag *[]string) *KVParser {
 		keyBag,
 	)
 }
+
+// NewShParser returns a new .properties leak parser
+func NewShParser(keyBag *[]string) *KVParser {
+	return NewKVParser(
+		`\s*(export)?([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,})\s*`,
+		`=`,
+		`(.*)`,
+		`\$(\{([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,})\}|([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,}))`,
+		keyBag,
+	)
+}

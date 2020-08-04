@@ -52,27 +52,16 @@ parsers:
   - type: "env"
     extensions:
       - ".env" 
-    keys:
-      - "pass"
-      - "host"
-      - "proxy"
-      - "key"
   - type: "dockerfile"
     extensions:
       - "Dockerfile"
-    keys:
-      - "pass"
-      - "host"
-      - "proxy"
-      - "key"
+  - type: "shell"
+    extensions:
+      - ".sh"
+      - "profile"
   - type: "properties"
     extensions:
       - ".properties"
-    keys:
-      - "pass"
-      - "host"
-      - "proxy"
-      - "key"
 
 black_list:
   - .*\.tar|zip|gz
