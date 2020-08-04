@@ -5,7 +5,6 @@ import (
 )
 
 func TestFsClient(t *testing.T) {
-	f := FsScanner{}
-	f.New(".", "../../resources/rules.yaml", &HTMLReport{}, false)
+	f := NewFsScanner(".", "../../resources/rules.yaml", &HTMLReport{}, false)
 	f.Scan(5)
 }

@@ -11,14 +11,18 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// ReportInterface modules writer behaviour for different reports
 type ReportInterface interface {
 	Write(Scanner)
 }
 
+// HTMLReport implements the ReportInterface to write html reports
 type HTMLReport struct {
 	Outfile  string
 	Template *template.Template
 }
+
+// YamlReport implements the ReportInterface to write yaml reports
 type YamlReport struct {
 	Outfile string
 }

@@ -128,7 +128,7 @@ a,a:hover {
   <div class="card-body">
     <h5 class="card-title">
       {{ .File }}
-    {{- if .Parser }}    
+    {{- if .CtxParserRule }}    
     <span class="badge badge-warning badge-pill">parser rule</span>
     {{- else }}
     <span class="badge badge-danger badge-pill">regexp rule</span>
@@ -166,7 +166,7 @@ a,a:hover {
           <div class="tab-pane fade show active" id="nav-regex" role="tabpanel" aria-labelledby="nav-home-tab">
           <div id="rules" class="text-center">
             <br/>
-            <h3><span style="font-weight: bold; font-size: 40px;" id="rule-count">{{ len .RuleSet.Rules }}</span> active rule(s)</h3>
+            <h3><span style="font-weight: bold; font-size: 40px;" id="rule-count">{{ len .RuleSet.IndepParsers }}</span> active rule(s)</h3>
             <p>Defined by {{ .RulesPath }}<br/>last read on {{ .RuleSet.ReadAt | date "2006-01-02 15:04:05" }}</p>
             <div class="toggle-all d-flex justify-content-center">
               <button type="button" class="btn btn-primary" data-toggle="button" autocomplete="off" onclick="enableAllRules()">
@@ -180,7 +180,7 @@ a,a:hover {
             <hr/>
             <div id="accordionRule">
             {{- if .RuleSet }}
-            {{- range $idx, $rule := .RuleSet.Rules }}
+            {{- range $idx, $rule := .RuleSet.IndepParsers }}
               {{ $checksum := sha1sum .Definition }}
               <div class="card">
                 <div class="card-header" id="headingRule{{ $idx }}">
@@ -211,7 +211,7 @@ a,a:hover {
           <div class="tab-pane fade" id="nav-parser" role="tabpanel" aria-labelledby="nav-profile-tab">
             <div id="parsers" class="text-center">
               <br/>
-              <h3><span style="font-weight: bold; font-size: 40px;" id="parser-count">{{ len .RuleSet.Parsers }}</span> active parser(s)</h3>
+              <h3><span style="font-weight: bold; font-size: 40px;" id="parser-count">{{ len .RuleSet.CtxParsers }}</span> active parser(s)</h3>
               <p>Defined by {{ .RulesPath }}<br/>last read on {{ .RuleSet.ReadAt | date "2006-01-02 15:04:05" }}</p>
               <div class="toggle-all d-flex justify-content-center">
                 <button type="button" class="btn btn-primary" data-toggle="button" autocomplete="off" onclick="enableAllParsers()">
@@ -224,8 +224,8 @@ a,a:hover {
               </div>
               <hr/>
               <div id="accordionParser">
-                {{- if .RuleSet.Parsers }}
-                {{- range $idx, $parser := .RuleSet.Parsers }}
+                {{- if .RuleSet.CtxParsers }}
+                {{- range $idx, $parser := .RuleSet.CtxParsers }}
                   {{ $checksum := sha1sum .Type }}
                   <div class="card">
                     <div class="card-header" id="headingParser{{ $idx }}">
@@ -259,13 +259,13 @@ a,a:hover {
           <h1>Found <span style="font-weight: bold; font-size: 50px;" id="leak-count">{{ len .Result }}</span> potential credential leaks</h1>
           {{- $leaks := .Result }}
           {{- if .RuleSet }}
-          {{- if .RuleSet.Rules }}
-          {{- range .RuleSet.Rules }}
+          {{- if .RuleSet.IndepParsers }}
+          {{- range .RuleSet.IndepParsers }}
             <div id="container-{{ sha1sum .Definition }}" data-leaktype="rule">
               {{- $rule := . }}
               {{- range $leaks }}
-              {{- if .Rule }}
-              {{- if eq .Rule.Definition $rule.Definition }}
+              {{- if .IndepParserRule }}
+              {{- if eq .IndepParserRule.Definition $rule.Definition }}
               {{- if eq $scanner.Type "git" }}
                 {{- template "git" . }}
               {{- else }}
@@ -277,13 +277,13 @@ a,a:hover {
             </div>
           {{- end }}
           {{- end }}
-          {{- if .RuleSet.Parsers }}
-          {{- range .RuleSet.Parsers }}
+          {{- if .RuleSet.CtxParsers }}
+          {{- range .RuleSet.CtxParsers }}
             <div id="container-{{ sha1sum .Type }}" data-leaktype="parser">
               {{- $parser := . }}
               {{- range $leaks }}
-              {{- if .Parser }}
-              {{- if eq .Parser.Type $parser.Type }}
+              {{- if .CtxParserRule }}
+              {{- if eq .CtxParserRule.Type $parser.Type }}
               {{- if eq $scanner.Type "fs" }}
                 {{- template "fs" . }}
               {{- end }}

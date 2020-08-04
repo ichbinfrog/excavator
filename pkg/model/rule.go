@@ -6,7 +6,6 @@ import (
 	"hash/fnv"
 	"io/ioutil"
 	"os"
-	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -27,9 +26,9 @@ const (
 
 // RuleSet groups all Rules and Parsers interpreted from the user defined file
 //
-// - Rules represent parsers that are context independant
+// - CtxParsers represent parsers that are context independant
 //   it can parse a file line by line to precisely find the leak
-// - Parsers are parsers that need the entire file as a context
+// - IndepParsers are parsers that need the entire file as a context
 //   to analyse for leaks correctly (TODO: rename)
 //
 type RuleSet struct {
@@ -42,14 +41,14 @@ type RuleSet struct {
 	// has been changed. (for future uses)
 	Checksum          string
 	ReadAt            time.Time
-	Rules             []Rule           `yaml:"rules"`
-	Parsers           []ParserRule     `yaml:"parsers"`
-	BlackList         []string         `yaml:"black_list"`
-	BlackListCompiled []*regexp.Regexp `yaml:"-"`
+	IndepParsers      []IndepParserRule `yaml:"rules"`
+	CtxParsers        []CtxParserRule   `yaml:"parsers"`
+	BlackList         []string          `yaml:"black_list"`
+	BlackListCompiled []*regexp.Regexp  `yaml:"-"`
 }
 
-// Rule represents a context independant parser
-type Rule struct {
+// IndepParserRule represents a context independant parser
+type IndepParserRule struct {
 	Definition  string  `yaml:"definition"`
 	Description string  `yaml:"description,omitempty"`
 	Category    string  `yaml:"category,omitempty"`
@@ -62,7 +61,7 @@ func (r *RuleSet) ParseConfig(file string) {
 	var data []byte
 	var err error
 
-	if file == "" {
+	if len(file) == 0 {
 		box := packr.New("rules", "../../resources")
 		data, err = box.Find("rules.yaml")
 		if err != nil {
@@ -86,20 +85,18 @@ func (r *RuleSet) ParseConfig(file string) {
 			Err(err).
 			Msg("Failed to unmarshal yaml @")
 	}
-
 	r.Checksum = hex.EncodeToString(fnv.New32().Sum(data))[:10]
 	r.ReadAt = time.Now()
 
-	for idx, rule := range r.Rules {
-		r.Rules[idx].Compiled = regexp.MustCompile(rule.Definition)
+	for idx, rule := range r.IndepParsers {
+		r.IndepParsers[idx].Compiled = regexp.MustCompile(rule.Definition)
+	}
+	for idx := range r.CtxParsers {
+		r.CtxParsers[idx].Init()
 	}
 
 	for _, bl := range r.BlackList {
 		r.BlackListCompiled = append(r.BlackListCompiled, regexp.MustCompile(bl))
-	}
-
-	for idx := range r.Parsers {
-		r.Parsers[idx].Init()
 	}
 }
 
@@ -124,9 +121,9 @@ func (r *RuleSet) ParsePatch(patch *object.Patch, commit *object.Commit, repo *R
 
 		for _, chunk := range filePatch.Chunks() {
 			if chunk.Type() == diff.Add {
-				lines := strings.Split(strings.Replace(chunk.Content(), "\r\n", "\n", -1), "\n")
+				lines := strings.Split(chunk.Content(), "\n")
 				for idx, line := range lines {
-					for _, rule := range r.Rules {
+					for _, rule := range r.IndepParsers {
 						if rule.Compiled.MatchString(line) {
 							start := idx - contextSize
 							end := idx + contextSize
@@ -137,14 +134,14 @@ func (r *RuleSet) ParsePatch(patch *object.Patch, commit *object.Commit, repo *R
 								end = len(lines) - 1
 							}
 							disc := GitLeak{
-								Line:     idx,
-								Affected: idx - start,
-								File:     to.Path(),
-								Author:   commit.Author.Name,
-								When:     commit.Author.When,
-								Commit:   to.Hash().String(),
-								Repo:     repo,
-								Rule:     &rule,
+								Line:            idx,
+								Affected:        idx - start,
+								File:            to.Path(),
+								Author:          commit.Author.Name,
+								When:            commit.Author.When,
+								Commit:          to.Hash().String(),
+								Repo:            repo,
+								IndepParserRule: &rule,
 							}
 							disc.Snippet = make([]string, len(lines[start:end]))
 							copy(disc.Snippet, lines[start:end])
@@ -170,10 +167,9 @@ func (r *RuleSet) ParseFile(file string, leakChan chan Leak) {
 	reader := bufio.NewReader(fd)
 	defer fd.Close()
 
-	fileExtension := path.Ext(file)
-	for _, rule := range r.Parsers {
+	for _, rule := range r.CtxParsers {
 		for _, ext := range rule.Extensions {
-			if strings.Compare(fileExtension, ext) == 0 {
+			if strings.HasSuffix(file, ext) {
 				rule.Parser.Parse(*reader, leakChan, file, &rule)
 				return
 			}
@@ -188,13 +184,13 @@ func (r *RuleSet) ParseFile(file string, leakChan chan Leak) {
 		if !utf8.ValidString(line) {
 			continue
 		}
-		for _, rule := range r.Rules {
+		for _, rule := range r.IndepParsers {
 			if rule.Compiled.MatchString(line) {
 				leakChan <- FileLeak{
-					File:     file,
-					Line:     lineNum,
-					Affected: line,
-					Rule:     &rule,
+					File:            file,
+					Line:            lineNum,
+					Affected:        line,
+					IndepParserRule: &rule,
 				}
 				break
 			}

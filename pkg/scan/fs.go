@@ -12,6 +12,7 @@ import (
 	"github.com/schollz/progressbar/v3"
 )
 
+// FsScanner stores configuration for scanning a local directory in the fs
 type FsScanner struct {
 	RulesPath string
 	Root      string
@@ -23,12 +24,14 @@ type FsScanner struct {
 	Output      ReportInterface
 }
 
+// Type returns the string type of the scanner ("fs")
 func (f FsScanner) Type() string {
 	return "fs"
 }
 
-func (f *FsScanner) New(root, rulespath string, output ReportInterface, debug bool) {
-	*f = FsScanner{
+// NewFsScanner creates a new FsScanner
+func NewFsScanner(root, rulespath string, output ReportInterface, debug bool) *FsScanner {
+	f := &FsScanner{
 		Root:      root,
 		RulesPath: rulespath,
 		RuleSet:   &model.RuleSet{},
@@ -37,6 +40,7 @@ func (f *FsScanner) New(root, rulespath string, output ReportInterface, debug bo
 	}
 
 	f.RuleSet.ParseConfig(f.RulesPath)
+	return f
 }
 
 func (f *FsScanner) getFiles() []string {
@@ -78,8 +82,10 @@ func (f *FsScanner) getFiles() []string {
 	return files
 }
 
+// Scan iterates over each file recursively and use defined rules
+// to analyse for possible leaks
 func (f *FsScanner) Scan(concurrent int) {
-	start := time.Now()
+	startTime := time.Now()
 	files := f.getFiles()
 	chunkSize := len(files) / concurrent
 	if chunkSize == 0 {
@@ -123,7 +129,7 @@ func (f *FsScanner) Scan(concurrent int) {
 		f.ProgressBar.Clear()
 	}
 	log.Info().
-		Str("duration", time.Since(start).String()).
+		Str("duration", time.Since(startTime).String()).
 		Msg("Scan completed in")
 	log.Info().
 		Int("potential leaks", len(f.Result)).
@@ -132,15 +138,15 @@ func (f *FsScanner) Scan(concurrent int) {
 }
 
 func (f FsScanner) scanChunk(j, e int, files []string, leakChan chan model.Leak, doneChan chan bool) {
-	log.Info().
+	log.Trace().
 		Int("start_file", j).
 		Int("end_file", e-1).
 		Msg("Routine launched")
 	for _, file := range files[j : e-1] {
 		f.RuleSet.ParseFile(file, leakChan)
-	}
-	if f.Debug {
-		f.ProgressBar.Add(1)
+		if f.Debug {
+			f.ProgressBar.Add(1)
+		}
 	}
 	doneChan <- true
 }

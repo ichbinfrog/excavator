@@ -2,6 +2,7 @@ package model
 
 import (
 	"bufio"
+	"bytes"
 	"regexp"
 	"strings"
 )
@@ -25,7 +26,8 @@ type pair struct {
 // 		<value>: \S*
 type KVParser struct {
 	Pairs      map[string]pair
-	Bag        []string
+	KeyBag     *[]string
+	ValueBag   *[]string
 	Threshold  float32
 	Matcher    *regexp.Regexp
 	VarMatcher *regexp.Regexp
@@ -36,13 +38,13 @@ func NewKVParser(keyRegexp, equal, valRegexp, varRegexp string, bag []string) *K
 	return &KVParser{
 		Matcher:    regexp.MustCompile(keyRegexp + equal + valRegexp),
 		VarMatcher: regexp.MustCompile(varRegexp),
-		Bag:        bag,
+		KeyBag:     &bag,
 		Pairs:      make(map[string]pair),
 	}
 }
 
 // Parse reads file line by line to scan the KV file
-func (k *KVParser) Parse(reader bufio.Reader, leakChan chan Leak, file string, rule *ParserRule) {
+func (k *KVParser) Parse(reader bufio.Reader, leakChan chan Leak, file string, rule *CtxParserRule) {
 	lineNum := 0
 	buf := bufio.NewScanner(&reader)
 	for buf.Scan() {
@@ -52,6 +54,10 @@ func (k *KVParser) Parse(reader bufio.Reader, leakChan chan Leak, file string, r
 		if len(match) <= 2 {
 			continue
 		}
+		value := bytes.TrimSpace(match[2])
+		if len(value) == 0 {
+			continue
+		}
 		k.Pairs[string(match[1])] = pair{
 			value:    match[2],
 			line:     lineNum,
@@ -59,7 +65,7 @@ func (k *KVParser) Parse(reader bufio.Reader, leakChan chan Leak, file string, r
 		}
 	}
 	for key, pair := range k.Pairs {
-		for _, keyword := range k.Bag {
+		for _, keyword := range *k.KeyBag {
 			if strings.Contains(
 				strings.ToLower(key),
 				keyword,
@@ -77,14 +83,16 @@ func (k *KVParser) Parse(reader bufio.Reader, leakChan chan Leak, file string, r
 	for _, pair := range k.Pairs {
 		if pair.threats != 0 {
 			leakChan <- FileLeak{
-				File:     file,
-				Line:     pair.line,
-				Affected: string(pair.affected),
-				Threat:   pair.threats,
-				Parser:   rule,
+				File:          file,
+				Line:          pair.line,
+				Affected:      string(pair.affected),
+				Threat:        pair.threats,
+				CtxParserRule: rule,
 			}
 		}
 	}
+	// free map after usage (future-proof for pooling)
+	k.Pairs = make(map[string]pair)
 }
 
 func (k *KVParser) parseVariable(value []byte) int {
@@ -93,10 +101,7 @@ func (k *KVParser) parseVariable(value []byte) int {
 	for _, match := range matches {
 		if len(match) >= 2 {
 			for key := range k.Pairs {
-				if strings.Compare(
-					key,
-					string(match[2]),
-				) == 0 {
+				if strings.Compare(key, string(match[2])) == 0 {
 					innerCalls++
 					break
 				}
@@ -107,25 +112,36 @@ func (k *KVParser) parseVariable(value []byte) int {
 }
 
 // NewEnvParser returns a new environ file leak parser
-func NewEnvParser(bag []string) *KVParser {
+func NewEnvParser(keyBag []string) *KVParser {
 	return NewKVParser(
 		`([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,})`,
 		`=`,
 		`(.*)`,
 		`\$(\{([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,})\}|([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,}))`,
-		bag,
+		keyBag,
 	)
 }
 
 // NewDockerFileParser returns a new dockerfile leak parser
 // this comes from the asumption that some ENV declarations
 // can be left in the file during developpement cycles
-func NewDockerFileParser(bag []string) *KVParser {
+func NewDockerFileParser(keyBag []string) *KVParser {
 	return NewKVParser(
 		`(ENV|ARGS)\s+([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,})`,
 		`=?`,
 		`(.*)`,
 		`\$(\{([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,})\}|([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,}))`,
-		bag,
+		keyBag,
+	)
+}
+
+// NewPropertiesParser returns a new .properties leak parser
+func NewPropertiesParser(keyBag []string) *KVParser {
+	return NewKVParser(
+		`([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,})\s*`,
+		`=`,
+		`(.*)`,
+		`\$(\{([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,})\}|([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,}))`,
+		keyBag,
 	)
 }

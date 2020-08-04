@@ -6,6 +6,7 @@ import (
 	"github.com/ichbinfrog/excavator/pkg/model"
 )
 
+// Scanner is an interface for scanning behaviours
 type Scanner interface {
 	Scan(concurrent int)
 	Type() string

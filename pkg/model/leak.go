@@ -35,11 +35,11 @@ type GitLeak struct {
 	When time.Time `yaml:"commit_date"`
 
 	// Pointer to the offending rule
-	Rule *Rule `yaml:"-"`
+	IndepParserRule *IndepParserRule `yaml:"-"`
 	// Pointer to the offending parser rule
 	// The Rule and ParserRule attributes are exclusive
-	Parser *ParserRule `yaml:"-"`
-	Repo   *Repo       `yaml:"-"`
+	CtxParserRule *CtxParserRule `yaml:"-"`
+	Repo          *Repo          `yaml:"-"`
 }
 
 // FileLeak is a potential leak detected in the filesystem
@@ -50,9 +50,9 @@ type FileLeak struct {
 
 	// Single offending line
 	// Or a concatenation (\n) of multiple lines
-	Affected string      `yaml:"affected"`
-	Threat   int         `yaml:"threat,omitempty"`
-	Explain  string      `yaml:"explain"`
-	Rule     *Rule       `yaml:"-"`
-	Parser   *ParserRule `yaml:"-"`
+	Affected        string           `yaml:"affected"`
+	Threat          int              `yaml:"threat,omitempty"`
+	Explain         string           `yaml:"explain"`
+	IndepParserRule *IndepParserRule `yaml:"-"`
+	CtxParserRule   *CtxParserRule   `yaml:"-"`
 }

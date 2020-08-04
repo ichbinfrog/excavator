@@ -23,7 +23,6 @@ type Repo struct {
 // Init creates a repository struct
 func (r *Repo) Init(source, cache string) {
 	r.Source = source
-
 	if _, err := url.Parse(source); err != nil {
 		log.Warn().
 			Err(err).

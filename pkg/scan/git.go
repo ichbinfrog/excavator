@@ -11,25 +11,32 @@ import (
 	"github.com/schollz/progressbar/v3"
 )
 
+// GitScanner stores configuration for scanning a git repository
 type GitScanner struct {
-	Cache     string
+	// Where to store local copy of the repo
+	Cache string
+	// Path to the rule definition file
+	// If set to "" automatically used default resources.yaml embedded by packr
 	RulesPath string
-	Scanner   *Scanner
 	Repo      *model.Repo
+	RuleSet   *model.RuleSet
 	Result    []model.Leak
 
+	// Whether or not to display progressbar (mainly for testing)
 	Debug       bool
 	ProgressBar *progressbar.ProgressBar
-	RuleSet     *model.RuleSet
-	Output      ReportInterface
+	// Output writer interface
+	Output ReportInterface
 }
 
+// Type returns the string type of the scanner ("git")
 func (g GitScanner) Type() string {
 	return "git"
 }
 
-func (g *GitScanner) New(source, cache, rulespath string, output ReportInterface, debug bool) {
-	*g = GitScanner{
+// NewGitScanner creates a new git Scanner
+func NewGitScanner(source, cache, rulespath string, output ReportInterface, debug bool) *GitScanner {
+	g := &GitScanner{
 		Repo:      &model.Repo{},
 		Cache:     cache,
 		RulesPath: rulespath,
@@ -40,11 +47,13 @@ func (g *GitScanner) New(source, cache, rulespath string, output ReportInterface
 
 	g.RuleSet.ParseConfig(g.RulesPath)
 	g.Repo.Init(source, g.Cache)
+	return g
 }
 
+// Scan iterates over each commits and use defined rules
+// to analyse for possible leaks
 func (g *GitScanner) Scan(concurrent int) {
-	start := time.Now()
-
+	startTime := time.Now()
 	commits := g.Repo.FetchCommits()
 	chunkSize := len(commits) / concurrent
 	if chunkSize == 0 {
@@ -80,15 +89,15 @@ func (g *GitScanner) Scan(concurrent int) {
 		go leakReader(leakChan, doneChan, &wg, res, i)
 	}
 	wg.Wait()
-
 	for _, chunk := range res {
 		g.Result = append(g.Result, chunk...)
 	}
+
 	if g.Debug {
 		g.ProgressBar.Clear()
 	}
 	log.Info().
-		Str("duration", time.Since(start).String()).
+		Str("duration", time.Since(startTime).String()).
 		Msg("Scan completed in")
 	log.Info().
 		Int("potential leaks", len(g.Result)).
@@ -97,7 +106,7 @@ func (g *GitScanner) Scan(concurrent int) {
 }
 
 func (g *GitScanner) scanChunk(j, e int, commits []*object.Commit, leakChan chan model.Leak, doneChan chan bool) {
-	log.Info().
+	log.Trace().
 		Int("start_commit", j).
 		Int("end_commit", e-1).
 		Msg("Routine launched")
