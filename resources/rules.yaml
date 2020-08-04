@@ -59,6 +59,8 @@ parsers:
     extensions:
       - ".sh"
       - "profile"
+      - ".bashrc"
+      - ".zshrc"
   - type: "properties"
     extensions:
       - ".properties"
