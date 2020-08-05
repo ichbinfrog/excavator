@@ -1,92 +1,100 @@
 <html>
-	<head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-    <link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
-    <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
-    <style>
-.btn {
-  border-radius: 0;
-}
-
-.card {
-  border: none;
-  margin: 8px;
-}
-
-body, html {
-  margin: 0;
-  height:100%;
-}
-body{
-  overflow: hidden;
-}
-.container-fluid, .parent{
-  height: 100%;
-}
-
-#left, #right{
-  position: relative;
-  float: left;
-  height:100%;
-  overflow-y: auto; 
-}
-
-.blob-container {
-  overflow-y: hidden;
-  padding: 15px;
-}
-
-.blob {
-  border-spacing: 0;
-  border-collapse: collapse;
-  table-layout: fixed;
-}
-
-.blob-num {
-  width: 1%;
-  min-width: 50px;
-  padding-right: 10px;
-  padding-left: 10px;
-  font-family: "SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace";
-  font-size: 12px;
-  line-height: 20px;
-  color: rgba(27,31,35,.3);
-  text-align: right;
-  white-space: pre;
-}
-
-.blob-code {
-  padding-top: 10px;
-  padding-bottom: 10px;
-  word-wrap:break-word;
-}
-
-a,a:hover {
-  color: inherit;
-  text-decoration: inherit;
-  cursor: inherit;
-}
-
-.leaks {
-  margin: 5%;
-}
-
-.slider:before {
-  opacity:1;
-}
-
-.slider:hover:before{
-  opacity: 0.8;
-}
-
-.badge-pill {
-  padding-right: 4px;
-}
-    </style>
-  </head>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous"> <!-- FFS -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script> <!-- FFSx2 -->
+  <link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
+  <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+  <style>
+    .btn {
+      border-radius: 0;
+    }
+    
+    .card {
+      border: none;
+      margin: 8px;
+    }
+    
+    .card-body {
+      padding: 1.25rem 0 0 0;
+    }
+    
+    .card>hr {
+      margin: 0;
+      visibility: hidden;
+    }
+    
+    body, html {
+      margin: 0;
+      height:100%;
+    }
+    body{
+      overflow: hidden;
+    }
+    .container-fluid, .parent{
+      height: 100%;
+    }
+    
+    #left, #right{
+      position: relative;
+      float: left;
+      height:100%;
+      overflow-y: scroll; 
+    }
+    
+    #left {
+      min-width: 360px;
+    }
+    
+    .nav {
+      justify-content: center;
+    }
+    
+    .blob-container {
+      overflow-y: hidden;
+      padding: 10px 0;
+    }
+    
+    .blob {
+      border-spacing: 0;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    
+    .blob-num {
+      min-width: 60px;
+      padding: 0 10px;
+      font-family: "SFMono-Regular","consolas","Liberation Mono","Menlo",monospace;
+      color: rgb(35 35 35 / 56%);
+      text-align: right;
+      white-space: pre;
+    }
+    
+    .blob-code {
+      word-wrap:break-word;
+      padding: 0;
+    }
+    
+    a,a:hover {
+      color: inherit;
+      text-decoration: inherit;
+      cursor: inherit;
+    }
+    
+    .leaks {
+      margin: 5px;
+    }
+    
+    .slider:before {
+      opacity:1;
+    }
+    
+    .slider:hover:before{
+      opacity: 0.8;
+    }
+  </style>
+</head>
 {{- define "git" }}
 <div class="card">
   <div class="card-body">
@@ -94,138 +102,138 @@ a,a:hover {
       {{ .File }}
       <br>
       {{ .Commit }}
-    <span class="badge badge-danger badge-pill">regexp rule</span></h5>
-    <p class="card-text">Author: {{ .Author }}    |   At: {{ .When | date "2006-01-02 15:04:05"}}</p>
-    <div class="blob-container table-responsive">
-      <table class="blob table-hover table-borderless">
-        <tbody>
-        {{- $start := . }}
-        {{- range $idx, $line := .Snippet }}
-        <tr>
-          <td class="blob-num">{{ add $idx $start.Line }}</td>
-          {{- if eq $idx $start.Affected }}
-          <td class="blob-code font-weight-bold">
-          {{ $line }}
-          </td>
-          {{- else }}
-          <td class="blob-code">
-          {{ $line }}
-          </td>
-          {{- end }}
-        </tr>
+      <span class="badge badge-danger badge-pill">regexp rule</span></h5>
+      <p class="card-text">Author: {{ .Author }}    |   At: {{ .When | date "2006-01-02 15:04:05"}}</p>
+      <div class="blob-container table-responsive">
+        <table class="blob table-hover table-borderless">
+          <tbody>
+            {{- $start := . }}
+            {{- range $idx, $line := .Snippet }}
+            <tr>
+              <td class="blob-num">{{ add $idx $start.Line }}</td>
+              {{- if eq $idx $start.Affected }}
+              <td class="blob-code font-weight-bold">
+                {{ $line }}
+              </td>
+              {{- else }}
+              <td class="blob-code">
+                {{ $line }}
+              </td>
+              {{- end }}
+            </tr>
+            {{- end }}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <hr/>
+  </div>
+  {{- end }}
+  
+  
+  {{- define "fs" }}
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title">
+        {{ .File }}
+        {{- if .CtxParserRule }}    
+        <span class="badge badge-warning badge-pill">parser rule</span>
+        {{- else }}
+        <span class="badge badge-danger badge-pill">regexp rule</span>
         {{- end }}
-        </tbody>
-      </table>
+      </h5>
+      <div class="blob-container table-responsive">
+        <table class="blob table-hover table-borderless">
+          <tbody>
+            <tr>
+              <td class="blob-num">{{ .Line }}</td>
+              <td class="blob-code">
+                {{ .Affected }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
+    <hr/>
   </div>
-  <hr/>
-</div>
-{{- end }}
-
-
-{{- define "fs" }}
-<div class="card">
-  <div class="card-body">
-    <h5 class="card-title">
-      {{ .File }}
-    {{- if .CtxParserRule }}    
-    <span class="badge badge-warning badge-pill">parser rule</span>
-    {{- else }}
-    <span class="badge badge-danger badge-pill">regexp rule</span>
-    {{- end }}
-    </h5>
-    <div class="blob-container table-responsive">
-      <table class="blob table-hover table-borderless">
-        <tbody>
-        <tr>
-          <td class="blob-num">{{ .Line }}</td>
-          <td class="blob-code">
-          {{ .Affected }}
-          </td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-  <hr/>
-</div>
-{{- end }}
-
-{{ $scanner := . }}
-	<body>
-  <div class="container-fluid">
-    <div class="row parent">
-      <div class="col-sm-2" id="left">
-        <nav>
-          <div class="nav nav-tabs" id="nav-tab" role="tablist">
-            <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#nav-regex" role="tab" aria-controls="nav-home" aria-selected="true">Regex Rules</a>
-            <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#nav-parser" role="tab" aria-controls="nav-profile" aria-selected="false">Parser Rules</a>
-          </div>
-        </nav>
-        <div class="tab-content" id="nav-tabContent">
-          <div class="tab-pane fade show active" id="nav-regex" role="tabpanel" aria-labelledby="nav-home-tab">
-          <div id="rules" class="text-center">
-            <br/>
-            <h3><span style="font-weight: bold; font-size: 40px;" id="rule-count">{{ len .RuleSet.IndepParsers }}</span> active rule(s)</h3>
-            <p>Defined by {{ .RulesPath }}<br/>last read on {{ .RuleSet.ReadAt | date "2006-01-02 15:04:05" }}</p>
-            <div class="toggle-all d-flex justify-content-center">
-              <button type="button" class="btn btn-primary" data-toggle="button" autocomplete="off" onclick="enableAllRules()">
-                Enable All
-              </button>
-              &nbsp;
-              <button type="button" class="btn btn-primary" data-toggle="button" autocomplete="off" onclick="disableAllRules()">
-                Disable All
-              </button>
+  {{- end }}
+  
+  {{ $scanner := . }}
+  <body>
+    <div class="container-fluid">
+      <div class="row parent">
+        <div class="col-sm-2" id="left">
+          <nav>
+            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+              <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#nav-regex" role="tab" aria-controls="nav-home" aria-selected="true">Regex Rules</a>
+              <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#nav-parser" role="tab" aria-controls="nav-profile" aria-selected="false">Parser Rules</a>
             </div>
-            <hr/>
-            <div id="accordionRule">
-            {{- if .RuleSet }}
-            {{- range $idx, $rule := .RuleSet.IndepParsers }}
-              {{ $checksum := sha1sum .Definition }}
-              <div class="card">
-                <div class="card-header" id="headingRule{{ $idx }}">
-                  <div class="row">
-                    <div class="col-sm-2 d-flex align-items-center">
-                      <input type="checkbox" class="rule" name="checkbox" id="checkbox-{{ $checksum }}" onclick="toggleRule({{ $checksum }})" checked/>
+          </nav>
+          <div class="tab-content" id="nav-tabContent">
+            <div class="tab-pane fade show active" id="nav-regex" role="tabpanel" aria-labelledby="nav-home-tab">
+              <div id="rules" class="text-center">
+                <br/>
+                <h3><span style="font-weight: bold; font-size: 40px;" id="rule-count">{{ len .RuleSet.IndepParsers }}</span> active rule(s)</h3>
+                <p>Defined by {{ .RulesPath }}<br/>last read on {{ .RuleSet.ReadAt | date "2006-01-02 15:04:05" }}</p>
+                <div class="toggle-all d-flex justify-content-center">
+                  <button type="button" class="btn btn-primary" data-toggle="button" autocomplete="off" onclick="enableAllRules()">
+                    Enable All
+                  </button>
+                  &nbsp;
+                  <button type="button" class="btn btn-primary" data-toggle="button" autocomplete="off" onclick="disableAllRules()">
+                    Disable All
+                  </button>
+                </div>
+                <hr/>
+                <div id="accordionRule">
+                  {{- if .RuleSet }}
+                  {{- range $idx, $rule := .RuleSet.IndepParsers }}
+                  {{ $checksum := sha1sum .Definition }}
+                  <div class="card">
+                    <div class="card-header" id="headingRule{{ $idx }}">
+                      <div class="row">
+                        <div class="col-sm-2 d-flex align-items-center">
+                          <input type="checkbox" class="rule" name="checkbox" id="checkbox-{{ $checksum }}" onclick="toggleRule({{ $checksum }})" checked/>
+                        </div>
+                        <div class="col-sm-10 d-flex justify-content-between align-items-center">
+                          <button class="btn btn-block" data-toggle="collapse" data-target="#collapseRule{{ $idx }}" aria-expanded="true" aria-controls="collapseRule{{ $idx }}">
+                            {{ $rule.Description }}&nbsp;&nbsp;<span class="badge" data-count="{{ $checksum }}" id="badge-{{ $checksum }}">0</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <div class="col-sm-10 d-flex justify-content-between align-items-center">
-                    <button class="btn btn-block" data-toggle="collapse" data-target="#collapseRule{{ $idx }}" aria-expanded="true" aria-controls="collapseRule{{ $idx }}">
-                      {{ $rule.Description }}&nbsp;&nbsp;<span class="badge" data-count="{{ $checksum }}" id="badge-{{ $checksum }}">0</span>
-                    </button>
+                    <div id="collapseRule{{ $idx }}" class="collapse" aria-labelledby="headingRule{{ $idx }}" data-parent="#accordionRule">
+                      <div class="card-body">
+                        <p class="card-text">{{ default "" $rule.Category }}</p>
+                        <samp>{{ $rule.Definition }}</samp>
+                        <br/>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div id="collapseRule{{ $idx }}" class="collapse" aria-labelledby="headingRule{{ $idx }}" data-parent="#accordionRule">
-                  <div class="card-body">
-                    <p class="card-text">{{ default "" $rule.Category }}</p>
-                    <samp>{{ $rule.Definition }}</samp>
-                    <br/>
-                  </div>
+                  {{- end }}
+                  {{- end }}
                 </div>
               </div>
-            {{- end }}
-            {{- end }}
             </div>
-            </div>
-          </div>
-          <div class="tab-pane fade" id="nav-parser" role="tabpanel" aria-labelledby="nav-profile-tab">
-            <div id="parsers" class="text-center">
-              <br/>
-              <h3><span style="font-weight: bold; font-size: 40px;" id="parser-count">{{ len .RuleSet.CtxParsers }}</span> active parser(s)</h3>
-              <p>Defined by {{ .RulesPath }}<br/>last read on {{ .RuleSet.ReadAt | date "2006-01-02 15:04:05" }}</p>
-              <div class="toggle-all d-flex justify-content-center">
-                <button type="button" class="btn btn-primary" data-toggle="button" autocomplete="off" onclick="enableAllParsers()">
-                  Enable All
-                </button>
-                &nbsp;
-                <button type="button" class="btn btn-primary" data-toggle="button" autocomplete="off" onclick="disableAllParsers()">
-                  Disable All
-                </button>
-              </div>
-              <hr/>
-              <div id="accordionParser">
-                {{- if .RuleSet.CtxParsers }}
-                {{- range $idx, $parser := .RuleSet.CtxParsers }}
+            <div class="tab-pane fade" id="nav-parser" role="tabpanel" aria-labelledby="nav-profile-tab">
+              <div id="parsers" class="text-center">
+                <br/>
+                <h3><span style="font-weight: bold; font-size: 40px;" id="parser-count">{{ len .RuleSet.CtxParsers }}</span> active parser(s)</h3>
+                <p>Defined by {{ .RulesPath }}<br/>last read on {{ .RuleSet.ReadAt | date "2006-01-02 15:04:05" }}</p>
+                <div class="toggle-all d-flex justify-content-center">
+                  <button type="button" class="btn btn-primary" data-toggle="button" autocomplete="off" onclick="enableAllParsers()">
+                    Enable All
+                  </button>
+                  &nbsp;
+                  <button type="button" class="btn btn-primary" data-toggle="button" autocomplete="off" onclick="disableAllParsers()">
+                    Disable All
+                  </button>
+                </div>
+                <hr/>
+                <div id="accordionParser">
+                  {{- if .RuleSet.CtxParsers }}
+                  {{- range $idx, $parser := .RuleSet.CtxParsers }}
                   {{ $checksum := sha1sum .Type }}
                   <div class="card">
                     <div class="card-header" id="headingParser{{ $idx }}">
@@ -234,9 +242,9 @@ a,a:hover {
                           <input type="checkbox" class="parser" name="checkbox" id="checkbox-parser-{{ $checksum }}" onclick="toggleParser({{ $checksum }})" checked/>
                         </div>
                         <div class="col-sm-10 d-flex justify-content-between align-items-center">
-                        <button class="btn btn-block" data-toggle="collapse" data-target="#collapseParser{{ $idx }}" aria-expanded="true" aria-controls="collapseParser{{ $idx }}">
-                          {{ $parser.Type }}&nbsp;&nbsp;<span class="badge" data-count="{{ $checksum }}" id="badge-{{ $checksum }}">0</span>
-                        </button>
+                          <button class="btn btn-block" data-toggle="collapse" data-target="#collapseParser{{ $idx }}" aria-expanded="true" aria-controls="collapseParser{{ $idx }}">
+                            {{ $parser.Type }}&nbsp;&nbsp;<span class="badge" data-count="{{ $checksum }}" id="badge-{{ $checksum }}">0</span>
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -247,160 +255,160 @@ a,a:hover {
                       </div>
                     </div>
                   </div>
-                {{- end }}
-                {{- end }}
+                  {{- end }}
+                  {{- end }}
                 </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <div class="col" id="right">
-        <div class="leaks" id="leaks">
-          <h1>Found <span style="font-weight: bold; font-size: 50px;" id="leak-count">{{ len .Result }}</span> potential credential leaks</h1>
-          {{- $leaks := .Result }}
-          {{- if .RuleSet }}
-          {{- if .RuleSet.IndepParsers }}
-          {{- range .RuleSet.IndepParsers }}
+        <div class="col" id="right">
+          <div class="leaks" id="leaks">
+            <h1>Found <span style="font-weight: bold; font-size: 50px;" id="leak-count">{{ len .Result }}</span> potential credential leaks</h1>
+            {{- $leaks := .Result }}
+            {{- if .RuleSet }}
+            {{- if .RuleSet.IndepParsers }}
+            {{- range .RuleSet.IndepParsers }}
             <div id="container-{{ sha1sum .Definition }}" data-leaktype="rule">
               {{- $rule := . }}
               {{- range $leaks }}
               {{- if .IndepParserRule }}
               {{- if eq .IndepParserRule.Definition $rule.Definition }}
               {{- if eq $scanner.Type "git" }}
-                {{- template "git" . }}
+              {{- template "git" . }}
               {{- else }}
-                {{- template "fs" . }}
+              {{- template "fs" . }}
               {{- end }}
               {{- end }}
               {{- end }}
               {{- end }}
             </div>
-          {{- end }}
-          {{- end }}
-          {{- if .RuleSet.CtxParsers }}
-          {{- range .RuleSet.CtxParsers }}
+            {{- end }}
+            {{- end }}
+            {{- if .RuleSet.CtxParsers }}
+            {{- range .RuleSet.CtxParsers }}
             <div id="container-{{ sha1sum .Type }}" data-leaktype="parser">
               {{- $parser := . }}
               {{- range $leaks }}
               {{- if .CtxParserRule }}
               {{- if eq .CtxParserRule.Type $parser.Type }}
               {{- if eq $scanner.Type "fs" }}
-                {{- template "fs" . }}
+              {{- template "fs" . }}
               {{- end }}
               {{- end }}
               {{- end }}
               {{- end }}
             </div>
-          {{- end }}
-          {{- end }}
-          {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  <script>
-    function computeCount() {
-      let targets = document.querySelectorAll("span.badge");
-      targets.forEach((target) => {
-        let container = document.getElementById("container-"+target.dataset.count);
-        let count = Array.from(container.children).filter(el => {
-          return el.tagName == "DIV" 
-        }).length;
-        target.innerHTML = count;
-        if (count == 0) {
-          target.classList.add("badge-light");
+    <script>
+      function computeCount() {
+        let targets = document.querySelectorAll("span.badge");
+        targets.forEach((target) => {
+          let container = document.getElementById("container-"+target.dataset.count);
+          let count = Array.from(container.children).filter(el => {
+            return el.tagName == "DIV" 
+          }).length;
+          target.innerHTML = count;
+          if (count == 0) {
+            target.classList.add("badge-light");
+          } else {
+            target.classList.add("badge-primary");
+          }
+        })
+      };
+      computeCount();
+      
+      function toggleParser(checksum) {
+        let check = document.getElementById("checkbox-parser-"+checksum);
+        let target = document.getElementById("container-"+checksum);
+        let leakCount = document.getElementById("leak-count");
+        let parserCount = document.getElementById("parser-count");
+        if (check.checked) {
+          target.style.display = "block";
         } else {
-          target.classList.add("badge-primary");
+          target.style.display = "none";
         }
-      })
-    };
-    computeCount();
-
-    function toggleParser(checksum) {
-      let check = document.getElementById("checkbox-parser-"+checksum);
-      let target = document.getElementById("container-"+checksum);
-      let leakCount = document.getElementById("leak-count");
-      let parserCount = document.getElementById("parser-count");
-      if (check.checked) {
-        target.style.display = "block";
-      } else {
-        target.style.display = "none";
+        let leaks = document.getElementById("leaks").children;
+        let allLeaks = Array.from(leaks).filter(el => {
+          return el.tagName == "DIV" && el.style.display != "none";
+        });
+        let totalLeak = 0;
+        for (let leak of allLeaks) {
+          totalLeak += +leak.children.length;
+        }
+        let activeLeaks = allLeaks.filter(el => {
+          return el.dataset.leaktype == "parser";
+        });
+        parserCount.innerHTML = activeLeaks.length;
+        leakCount.innerHTML = totalLeak;
+      };
+      
+      function toggleRule(checksum) {
+        let check = document.getElementById("checkbox-"+checksum);
+        let target = document.getElementById("container-"+checksum);
+        let leakCount = document.getElementById("leak-count");
+        let ruleCount = document.getElementById("rule-count");
+        if (check.checked) {
+          target.style.display = "block";
+        } else {
+          target.style.display = "none";
+        }
+        let leaks = document.getElementById("leaks").children;
+        let allLeaks = Array.from(leaks).filter(el => {
+          return el.tagName == "DIV" && el.style.display != "none";
+        });
+        let totalLeak = 0;
+        for (let leak of allLeaks) {
+          totalLeak += +leak.children.length;
+        }
+        let activeLeaks = allLeaks.filter(el => {
+          return el.dataset.leaktype == "rule";
+        });
+        ruleCount.innerHTML = activeLeaks.length;
+        leakCount.innerHTML = totalLeak;
+      };
+      
+      function enableAllRules() {
+        let checkboxes = document.querySelectorAll('input.rule[type=checkbox]');
+        for (let checkbox of checkboxes) {
+          checkbox.checked = false;
+          checkbox.click();
+        }
       }
-      let leaks = document.getElementById("leaks").children;
-      let allLeaks = Array.from(leaks).filter(el => {
-        return el.tagName == "DIV" && el.style.display != "none";
-      });
-      let totalLeak = 0;
-      for (let leak of allLeaks) {
-        totalLeak += +leak.children.length;
+      
+      function disableAllRules() {
+        let checkboxes = document.querySelectorAll('input.rule[type=checkbox]');
+        for (let checkbox of checkboxes) {
+          checkbox.checked = true;
+          checkbox.click();
+        }
       }
-      let activeLeaks = allLeaks.filter(el => {
-        return el.dataset.leaktype == "parser";
-      });
-      parserCount.innerHTML = activeLeaks.length;
-      leakCount.innerHTML = totalLeak;
-    };
-  
-    function toggleRule(checksum) {
-      let check = document.getElementById("checkbox-"+checksum);
-      let target = document.getElementById("container-"+checksum);
-      let leakCount = document.getElementById("leak-count");
-      let ruleCount = document.getElementById("rule-count");
-      if (check.checked) {
-        target.style.display = "block";
-      } else {
-        target.style.display = "none";
+      
+      function enableAllParsers() {
+        let checkboxes = document.querySelectorAll('input.parser[type=checkbox]');
+        for (let checkbox of checkboxes) {
+          checkbox.checked = false;
+          checkbox.click();
+        }
       }
-      let leaks = document.getElementById("leaks").children;
-      let allLeaks = Array.from(leaks).filter(el => {
-        return el.tagName == "DIV" && el.style.display != "none";
-      });
-      let totalLeak = 0;
-      for (let leak of allLeaks) {
-        totalLeak += +leak.children.length;
+      
+      function disableAllParsers() {
+        let checkboxes = document.querySelectorAll('input.parser[type=checkbox]');
+        for (let checkbox of checkboxes) {
+          checkbox.checked = true;
+          checkbox.click();
+        }
       }
-      let activeLeaks = allLeaks.filter(el => {
-        return el.dataset.leaktype == "rule";
-      });
-      ruleCount.innerHTML = activeLeaks.length;
-      leakCount.innerHTML = totalLeak;
-    };
-
-    function enableAllRules() {
-      let checkboxes = document.querySelectorAll('input.rule[type=checkbox]');
-      for (let checkbox of checkboxes) {
-        checkbox.checked = false;
-        checkbox.click();
-      }
-    }
-
-    function disableAllRules() {
-      let checkboxes = document.querySelectorAll('input.rule[type=checkbox]');
-      for (let checkbox of checkboxes) {
-        checkbox.checked = true;
-        checkbox.click();
-      }
-    }
-
-    function enableAllParsers() {
-      let checkboxes = document.querySelectorAll('input.parser[type=checkbox]');
-      for (let checkbox of checkboxes) {
-        checkbox.checked = false;
-        checkbox.click();
-      }
-    }
-
-    function disableAllParsers() {
-      let checkboxes = document.querySelectorAll('input.parser[type=checkbox]');
-      for (let checkbox of checkboxes) {
-        checkbox.checked = true;
-        checkbox.click();
-      }
-    }
-
-  </script>
-<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
-	</body>
-</html>	
+      
+    </script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script> <!-- FFSx3 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+  </body>
+  </html>	
