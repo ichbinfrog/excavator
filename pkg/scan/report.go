@@ -8,7 +8,7 @@ import (
 	"github.com/Masterminds/sprig"
 	"github.com/gobuffalo/packr/v2"
 	"github.com/rs/zerolog/log"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // ReportInterface modules writer behaviour for different reports

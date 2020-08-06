@@ -1,7 +1,7 @@
 package model
 
 import (
-	"bufio"
+	"io"
 
 	"github.com/rs/zerolog/log"
 )
@@ -10,7 +10,7 @@ import (
 // that only a full file context for analysis
 // in order to search for a potential leak
 type ContextParser interface {
-	Parse(reader *bufio.Reader, leakChan chan Leak, file string, rule *CtxParserRule)
+	Parse(reader io.Reader, leakChan chan Leak, file string, rule *CtxParserRule)
 }
 
 // CtxParserRule is an union of a definition of the parser
