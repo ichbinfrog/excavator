@@ -64,6 +64,12 @@ parsers:
   - type: "properties"
     extensions:
       - ".properties"
+  - type: "json"
+    extensions:
+      - ".json"
+    keys:
+      - "password"
+      - "token"
 
 black_list:
   - .*\.tar|zip|gz

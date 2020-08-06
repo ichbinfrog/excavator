@@ -6,10 +6,10 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// ContextParser is an interface to parsers
+// contextParser is an interface to parsers
 // that only a full file context for analysis
 // in order to search for a potential leak
-type ContextParser interface {
+type contextParser interface {
 	Parse(reader io.Reader, leakChan chan Leak, file string, rule *CtxParserRule)
 }
 
@@ -17,7 +17,7 @@ type ContextParser interface {
 // and it's instantiation. .Parser being the instance
 // and (.Type, .Extensions) stores the definition
 type CtxParserRule struct {
-	Parser     ContextParser `yaml:"-"`
+	Parser     contextParser `yaml:"-"`
 	Type       string        `yaml:"type"`
 	Extensions []string      `yaml:"extensions"`
 	KeyBag     []string      `yaml:"keys"`
@@ -38,16 +38,19 @@ func (c *CtxParserRule) Init() {
 
 	switch c.Type {
 	case "env":
-		c.Parser = NewEnvParser(&c.KeyBag)
+		c.Parser = newEnvParser(&c.KeyBag)
 		break
 	case "dockerfile":
-		c.Parser = NewDockerFileParser(&c.KeyBag)
+		c.Parser = newDockerFileParser(&c.KeyBag)
 		break
 	case "properties":
-		c.Parser = NewPropertiesParser(&c.KeyBag)
+		c.Parser = newPropertiesParser(&c.KeyBag)
 		break
 	case "shell":
-		c.Parser = NewShParser(&c.KeyBag)
+		c.Parser = newShParser(&c.KeyBag)
+		break
+	case "json":
+		c.Parser = newJSONParser(&c.KeyBag)
 		break
 	default:
 		log.Fatal().
