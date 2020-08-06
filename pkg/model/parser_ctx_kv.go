@@ -90,8 +90,6 @@ func (k *KVParser) Parse(reader *bufio.Reader, leakChan chan Leak, file string, 
 			}
 		}
 	}
-	// free map after usage (future-proof for pooling)
-	k.Pairs = make(map[string]pair)
 }
 
 func (k *KVParser) parseVariable(value []byte) int {
