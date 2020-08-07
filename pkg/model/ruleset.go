@@ -150,10 +150,11 @@ func (r *RuleSet) ParsePatch(patch *object.Patch, commit *object.Commit, repo *R
 func (r *RuleSet) ParseFile(file string, leakChan chan Leak) {
 	fd, err := os.Open(file)
 	if err != nil {
-		log.Error().
+		log.Trace().
 			Str("file", file).
 			Err(err).
 			Msg("Failed to read")
+		return
 	}
 	defer fd.Close()
 

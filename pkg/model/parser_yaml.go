@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -17,21 +18,32 @@ type yamlParser struct {
 func (y *yamlParser) Parse(reader io.Reader, leakChan chan Leak, file string, rule *CtxParserRule) {
 	buf := &bytes.Buffer{}
 	buf.ReadFrom(reader)
-	var root map[string]interface{}
+	var data interface{}
 
-	if err := yaml.Unmarshal(buf.Bytes(), &root); err != nil {
-		log.Error().
+	if err := yaml.Unmarshal(buf.Bytes(), &data); err != nil {
+		log.Trace().
 			Err(err).
 			Str("file", file).
 			Msg("Failed to unmarshal")
+		return
 	}
 
-	// flatten yaml to a single map to search for potential leaks
-	// this method does not allow for identifying line numbers
 	flattened := map[string]string{}
-	for k, v := range root {
-		flatten(k, v, flattened)
+	switch root := data.(type) {
+	// !!map document node type
+	case map[string]interface{}:
+		for k, v := range root {
+			flattenMap(k, v, flattened)
+		}
+		break
+	// !!seq document node type
+	case []interface{}:
+		for k, v := range root {
+			flattenMap(strconv.Itoa(k), v, flattened)
+		}
+		break
 	}
+
 	for k, v := range flattened {
 		for _, key := range *y.keyBag {
 			last := k
@@ -54,21 +66,21 @@ func (y *yamlParser) Parse(reader io.Reader, leakChan chan Leak, file string, ru
 	}
 }
 
-func flatten(prefix string, value interface{}, res map[string]string) {
+func flattenMap(prefix string, value interface{}, res map[string]string) {
 	switch submap := value.(type) {
 	case map[interface{}]interface{}:
 		for k, v := range submap {
-			flatten(fmt.Sprintf("%s.%v", prefix, k), v, res)
+			flattenMap(fmt.Sprintf("%s.%v", prefix, k), v, res)
 		}
 		return
 	case []interface{}:
 		for i, v := range submap {
-			flatten(fmt.Sprintf("%s[%d]", prefix, i), v, res)
+			flattenMap(fmt.Sprintf("%s[%d]", prefix, i), v, res)
 		}
 		return
 	case map[string]interface{}:
 		for k, v := range submap {
-			flatten(prefix+"."+k, v, res)
+			flattenMap(prefix+"."+k, v, res)
 		}
 		return
 	default:
