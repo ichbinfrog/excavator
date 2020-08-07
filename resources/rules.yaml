@@ -70,6 +70,7 @@ parsers:
     keys:
       - "password"
       - "token"
+      - "private"
 
 black_list:
   - .*\.tar|zip|gz

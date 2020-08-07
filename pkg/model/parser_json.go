@@ -42,20 +42,21 @@ func (j *jsonParser) Parse(reader io.Reader, leakChan chan Leak, file string, ru
 				}
 				affected.Reset()
 				affectedLine = lineNum
-				break
 			}
 			for _, key := range *j.keyBag {
 				if bytes.Contains(
-					bytes.ToLower(line[matches[0][0]+1:matches[0][1]-2]),
+					bytes.ToLower(line[matches[0][0]:matches[0][1]]),
 					[]byte(key),
 				) {
 					// add discovery if there's no running value matcher
 					if bytes.ContainsRune(line[matches[0][1]:], '{') {
-						// ignores beginning of objects or arrays
+						// ignores beginning of objects
 						// because they don't usually contain potential leaks
 						// that aren't present in keys that are deeper in the structure
+						// This also fixes duplicate discoveries
 						break
 					}
+					affectedLine = lineNum
 					affected.Write(line)
 					break
 				}
@@ -66,7 +67,7 @@ func (j *jsonParser) Parse(reader io.Reader, leakChan chan Leak, file string, ru
 			for _, key := range *j.keyBag {
 				for i := 0; i < len(matches); i++ {
 					if bytes.Contains(
-						bytes.ToLower(line[matches[0][0]+1:matches[0][1]-2]),
+						bytes.ToLower(line[matches[0][0]:matches[0][1]]),
 						[]byte(key),
 					) {
 						// add discovery if there's no running value matcher
@@ -78,6 +79,7 @@ func (j *jsonParser) Parse(reader io.Reader, leakChan chan Leak, file string, ru
 						}
 						if i == len(matches)-1 {
 							affected.Write(line)
+							affectedLine = lineNum
 						}
 					}
 				}
