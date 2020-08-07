@@ -52,6 +52,9 @@ func (c *CtxParserRule) Init() {
 	case "json":
 		c.Parser = newJSONParser(&c.KeyBag)
 		break
+	case "yaml":
+		c.Parser = newYAMLParser(&c.KeyBag)
+		break
 	default:
 		log.Fatal().
 			Str("parser_type", c.Type).

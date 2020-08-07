@@ -5,6 +5,47 @@ import (
 	"testing"
 )
 
+func TestYaml(t *testing.T) {
+	p := newYAMLParser(&[]string{
+		"pass",
+		"host",
+		"proxy",
+		"key",
+	})
+	reader := strings.NewReader(`
+image: openjdk:8
+
+stages:
+  - test
+  - deploy
+
+before_script:
+  - apt-get update -y
+  - apt-get install apt-transport-https -y
+  ## Install SBT
+  - echo "deb http://dl.bintray.com/sbt/debian /" | tee -a /etc/apt/sources.list.d/sbt.list
+  - apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 642AC823
+  - apt-get update -y
+  - apt-get install sbt -y
+  - sbt sbtVersion
+
+test:
+  stage: test
+  script:
+    - sbt clean coverage test coverageReport
+
+deploy:
+  stage: deploy
+  script:
+    - apt-get update -yq
+    - apt-get install rubygems ruby-dev -y
+    - gem install dpl
+    - dpl --provider=heroku --app=gitlab-play-sample-app --api-key=$HEROKU_API_KEY
+`)
+	ch := make(chan Leak)
+	p.Parse(reader, ch, "", nil)
+}
+
 func TestJson(t *testing.T) {
 	p := newJSONParser(&[]string{
 		"pass",

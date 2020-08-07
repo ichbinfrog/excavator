@@ -71,11 +71,20 @@ parsers:
       - "password"
       - "token"
       - "private"
+  - type: "yaml"
+    extensions:
+      - ".yaml"
+      - ".yml"
+    keys:
+      - "password"
+      - "token"
+      - "private"
 
 black_list:
   - .*\.tar|zip|gz
   - .*\.sample.*
   - .*\.svg|png|jpg|jpeg|pdf
   - .*\.git.*
-  - '.*.exe'
-  - '.*.amd64'
+  - '.*\.exe'
+  - '.*amd64'
+  - '.*\.csv'
