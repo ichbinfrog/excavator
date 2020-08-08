@@ -42,6 +42,10 @@
       height:100%;
       overflow-y: scroll; 
     }
+
+    #right {
+      padding: 5%;
+    }
     
     #left {
       min-width: 360px;
@@ -73,7 +77,9 @@
     
     .blob-code {
       word-wrap:break-word;
-      padding: 0;
+      padding-top: 3px;
+      padding-bottom: 3px;
+      padding-left: 15px;
     }
     
     a,a:hover {
@@ -104,7 +110,7 @@
   {{- if eq $idx $start.Affected }}
   <td class="blob-code">
     {{ stringSlice $line 0 $start.StartIdx }}
-    <strong>{{- stringSlice $line $start.StartIdx $start.EndIdx }}</strong>
+    <span class="text-danger font-weight-bold">{{- stringSlice $line $start.StartIdx $start.EndIdx }}</span>
     {{- stringSlice $line $start.EndIdx 0 }}
   </td>
   {{- else }}
@@ -122,7 +128,7 @@
   <td class="blob-code">
     {{- $snippet := (index .Snippet 0) }}
     {{ stringSlice $snippet 0 .StartIdx }}
-    <strong>{{- stringSlice $snippet .StartIdx .EndIdx }}</strong>
+    <span class="text-danger font-weight-bold">{{- stringSlice $snippet .StartIdx .EndIdx }}</span>
     {{- stringSlice $snippet .EndIdx 0 }}
   </td>
 </tr>
@@ -135,7 +141,7 @@
       {{ .File }}
       <br>
       {{ .Commit }}
-      <span class="badge badge-danger badge-pill">regexp rule</span></h5>
+      <span class="badge badge-danger badge-pill">R</span></h5>
       <p class="card-text">Author: {{ .Author }}    |   At: {{ .When | date "2006-01-02 15:04:05"}}</p>
       <div class="blob-container table-responsive">
         <table class="blob table-hover table-borderless">
@@ -184,8 +190,8 @@
         <div class="col-sm-2" id="left">
           <nav>
             <div class="nav nav-tabs" id="nav-tab" role="tablist">
-              <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#nav-regex" role="tab" aria-controls="nav-home" aria-selected="true">Regex Rules</a>
-              <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#nav-parser" role="tab" aria-controls="nav-profile" aria-selected="false">Parser Rules</a>
+              <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#nav-regex" role="tab" aria-controls="nav-home" aria-selected="true">Regex Rules <span class="badge badge-danger badge-pill">R</span></a>
+              <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#nav-parser" role="tab" aria-controls="nav-profile" aria-selected="false">Parser Rules <span class="badge badge-warning badge-pill">P</span></a>
             </div>
           </nav>
           <div class="tab-content" id="nav-tabContent">
