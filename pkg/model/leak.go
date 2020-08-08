@@ -23,9 +23,11 @@ type GitLeak struct {
 	// without having to store / display the whole file
 	Snippet []string `yaml:"snippet"`
 	// Affected is the index of the offending line in the snippet slice
-	StartIdx   int
+	Affected int `yaml:"affected"`
+	// Start index of the offending snippet within the affected line
+	StartIdx int
+	// End index of the offending snippet within the affected line
 	EndIdx     int
-	Affected   int    `yaml:"affected"`
 	Confidence string `yaml:"confidence"`
 
 	// Stores the name of the author of the commit
@@ -48,13 +50,18 @@ type FileLeak struct {
 	File string `yaml:"file"`
 	Line int    `yaml:"line"`
 
-	// Single offending line
-	// Or a concatenation (\n) of multiple lines
-	Snippet         []string `yaml:"affected"`
-	StartIdx        int
-	EndIdx          int
-	Affected        int              `yaml:"affected"`
-	Confidence      string           `yaml:"confidence"`
+	// Contains a couple of line before and after the commit
+	// This allows for displaying the context of the discovery
+	// without having to store / display the whole file
+	Snippet []string `yaml:"snippet"`
+	// Affected is the index of the offending line in the snippet slice
+	Affected int `yaml:"affected"`
+	// Start index of the offending snippet within the affected line
+	StartIdx int
+	// End index of the offending snippet within the affected line
+	EndIdx     int
+	Confidence string `yaml:"confidence"`
+
 	IndepParserRule *IndepParserRule `yaml:"-"`
 	CtxParserRule   *CtxParserRule   `yaml:"-"`
 }

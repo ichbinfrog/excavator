@@ -14,17 +14,37 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// sgmlParser is the base parser for Standard Generalized Markup Language (SGML)
+// derived languages (json, yaml, xml, ...).
+//
+// The SGML Parser attempts to flatten the data structure into a key value map
+// according to a certain set of rules
+//  - the key is built by appending the name of each of the parent node
+//  - for arrays the name of the parent node is it's index in the file
+//    NOTE that arrays are not ordering in this standard, thus the index
+//    is not consistent and only serves to build an unique key
+//
+// In the end, we end up with a map as such
+// "spec.template.spec.containers[0].name" :  "nginx"
+//
+// TODO: Implement the yaml node visitor to store the line number
+//			 as well as to run the key building iteratively for performance
+//
+//
 type sgmlParser struct {
 	keyBag     *[]string
 	keyMatcher *regexp.Regexp
-	Unmarshal  func([]byte, interface{}) error
+	// function that unmarshals the data read from the file into
+	// either a map[string]interface{} or a []interface{} as an
+	// internal representation
+	unmarshal func([]byte, interface{}) error
 }
 
 func newSGMLParser(keyBag *[]string, unmarshaller func([]byte, interface{}) error) *sgmlParser {
 	return &sgmlParser{
 		keyBag:     keyBag,
 		keyMatcher: regexp.MustCompile(`"([^\t\n]*)"\s*:`),
-		Unmarshal:  unmarshaller,
+		unmarshal:  unmarshaller,
 	}
 }
 
@@ -33,7 +53,7 @@ func (s *sgmlParser) Parse(reader io.Reader, leakChan chan Leak, file string, ru
 	buf.ReadFrom(reader)
 	var data interface{}
 
-	if err := s.Unmarshal(buf.Bytes(), &data); err != nil {
+	if err := s.unmarshal(buf.Bytes(), &data); err != nil {
 		log.Trace().
 			Err(err).
 			Str("file", file).

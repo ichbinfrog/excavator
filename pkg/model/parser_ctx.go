@@ -14,19 +14,24 @@ type contextParser interface {
 }
 
 // CtxParserRule is an union of a definition of the parser
-// and it's instantiation. .Parser being the instance
-// and (.Type, .Extensions) stores the definition
+// and it's instantiation.
 type CtxParserRule struct {
-	Parser     contextParser `yaml:"-"`
-	Type       string        `yaml:"type"`
-	Extensions []string      `yaml:"extensions"`
-	KeyBag     []string      `yaml:"keys"`
-	Confidence string        `yaml:"confidence"`
+	// Instance of the parser
+	Parser contextParser `yaml:"-"`
+	// Name of the parser type
+	Type string `yaml:"type"`
+	// Extensions which the parser takes into consideration
+	Extensions []string `yaml:"extensions"`
+	// Bag of words used mainly to identify keys/values
+	// that are potential leaks
+	KeyBag []string `yaml:"keys"`
+	// Confidence of the assessment
+	// - "High" : for context based parsers
+	// - "Low" : for regexp/context insensitive parsers
+	Confidence string `yaml:"confidence"`
 }
 
 // Init creates a Parser if the .Type is defined
-// TODO: Use reflect to make parsers more extensible
-//
 func (c *CtxParserRule) Init() {
 	if c.KeyBag == nil {
 		c.KeyBag = []string{
