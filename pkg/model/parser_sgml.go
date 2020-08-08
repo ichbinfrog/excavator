@@ -70,7 +70,8 @@ func (s *sgmlParser) Parse(reader io.Reader, leakChan chan Leak, file string, ru
 				leakChan <- FileLeak{
 					File:          file,
 					Line:          0,
-					Affected:      k + ":" + v,
+					Snippet:       []string{k + ":" + v},
+					Affected:      0,
 					StartIdx:      len(k) + 1,
 					EndIdx:        0,
 					CtxParserRule: rule,

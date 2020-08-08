@@ -104,7 +104,8 @@ func (k *kvParser) Parse(reader io.Reader, leakChan chan Leak, file string, rule
 			leakChan <- FileLeak{
 				File:          file,
 				Line:          pair.line,
-				Affected:      string(pair.affected),
+				Snippet:       []string{pair.affected},
+				Affected:      0,
 				StartIdx:      pair.indexes[2],
 				EndIdx:        pair.indexes[3],
 				Threat:        pair.threat,

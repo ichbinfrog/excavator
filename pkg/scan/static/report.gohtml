@@ -95,6 +95,39 @@
     }
   </style>
 </head>
+
+{{- define "regexblob" }}
+{{- $start := . }}
+{{- range $idx, $line := .Snippet }}
+<tr>
+  <td class="blob-num">{{ add $idx $start.Line }}</td>
+  {{- if eq $idx $start.Affected }}
+  <td class="blob-code">
+    {{ stringSlice $line 0 $start.StartIdx }}
+    <strong>{{- stringSlice $line $start.StartIdx $start.EndIdx }}</strong>
+    {{- stringSlice $line $start.EndIdx 0 }}
+  </td>
+  {{- else }}
+  <td class="blob-code">
+    {{ $line }}
+  </td>
+  {{- end }}
+</tr>
+{{- end }}
+{{- end }}
+
+{{- define "parserblob" }}
+<tr>
+  <td class="blob-num">{{ .Line }}</td>
+  <td class="blob-code">
+    {{- $snippet := (index .Snippet 0) }}
+    {{ stringSlice $snippet 0 .StartIdx }}
+    <strong>{{- stringSlice $snippet .StartIdx .EndIdx }}</strong>
+    {{- stringSlice $snippet .EndIdx 0 }}
+  </td>
+</tr>
+{{- end }}
+
 {{- define "git" }}
 <div class="card">
   <div class="card-body">
@@ -107,23 +140,7 @@
       <div class="blob-container table-responsive">
         <table class="blob table-hover table-borderless">
           <tbody>
-            {{- $start := . }}
-            {{- range $idx, $line := .Snippet }}
-            <tr>
-              <td class="blob-num">{{ add $idx $start.Line }}</td>
-              {{- if eq $idx $start.Affected }}
-              <td class="blob-code">
-                {{ stringSlice $line 0 $start.StartIdx }}
-                <strong>{{- stringSlice $line $start.StartIdx $start.EndIdx }}</strong>
-                {{- stringSlice $line $start.EndIdx 0 }}
-              </td>
-              {{- else }}
-              <td class="blob-code">
-                {{ $line }}
-              </td>
-              {{- end }}
-            </tr>
-            {{- end }}
+            {{- template "regexblob" . }}
           </tbody>
         </table>
       </div>
@@ -137,25 +154,21 @@
   <div class="card">
     <div class="card-body">
       <h5 class="card-title">
-        {{ .File }}
         {{- if .CtxParserRule }}    
-        <span class="badge badge-warning badge-pill">parser rule</span>
+        <span class="badge badge-warning badge-pill">P</span>
         {{- else }}
-        <span class="badge badge-danger badge-pill">regexp rule</span>
+        <span class="badge badge-danger badge-pill">R</span>
         {{- end }}
+        {{ .File }}
       </h5>
       <div class="blob-container table-responsive">
         <table class="blob table-hover table-borderless">
           <tbody>
-            {{- $start := . }}
-            <tr>
-              <td class="blob-num">{{ .Line }}</td>
-              <td class="blob-code">
-                {{ stringSlice .Affected 0 $start.StartIdx }}
-                <strong>{{- stringSlice .Affected $start.StartIdx $start.EndIdx }}</strong>
-                {{- stringSlice .Affected $start.EndIdx 0 }}
-              </td>
-            </tr>
+          {{- if .CtxParserRule }}
+            {{- template "parserblob" . }}
+          {{- else }}
+            {{- template "regexblob" . }}
+          {{- end }}
           </tbody>
         </table>
       </div>

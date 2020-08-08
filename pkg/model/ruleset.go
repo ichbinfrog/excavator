@@ -1,7 +1,7 @@
 package model
 
 import (
-	"bufio"
+	"bytes"
 	"encoding/hex"
 	"hash/fnv"
 	"io/ioutil"
@@ -170,11 +170,10 @@ func (r *RuleSet) ParseFile(file string, leakChan chan Leak) {
 		}
 	}
 
-	lineNum := 0
-	scanner := bufio.NewScanner(fd)
-	for scanner.Scan() {
-		lineNum++
-		line := scanner.Text()
+	buf := &bytes.Buffer{}
+	buf.ReadFrom(fd)
+	lines := strings.Split(buf.String(), "\n")
+	for idx, line := range lines {
 		if !utf8.ValidString(line) {
 			continue
 		}
@@ -182,14 +181,25 @@ func (r *RuleSet) ParseFile(file string, leakChan chan Leak) {
 			match := rule.Compiled.FindStringIndex(line)
 
 			if len(match) > 0 {
-				leakChan <- FileLeak{
+				start := idx - contextSize
+				end := idx + contextSize
+				if start < 0 {
+					start = 0
+				}
+				if end >= len(lines) {
+					end = len(lines) - 1
+				}
+				disc := FileLeak{
 					File:            file,
 					StartIdx:        match[0],
 					EndIdx:          match[1],
-					Line:            lineNum,
-					Affected:        line,
+					Line:            idx,
+					Affected:        idx - start,
 					IndepParserRule: &rule,
 				}
+				disc.Snippet = make([]string, len(lines[start:end]))
+				copy(disc.Snippet, lines[start:end])
+				leakChan <- disc
 				break
 			}
 		}
