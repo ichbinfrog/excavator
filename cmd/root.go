@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/rs/zerolog"
@@ -33,15 +32,11 @@ var (
 )
 
 func setVerbosity() {
-	fmt.Println(verbosity)
 	switch verbosity {
 	case 0:
-		zerolog.SetGlobalLevel(zerolog.WarnLevel)
-		break
-	case 1:
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 		break
-	case 2:
+	case 1:
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 		break
 	default:
