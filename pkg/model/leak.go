@@ -52,7 +52,10 @@ type FileLeak struct {
 
 	// Single offending line
 	// Or a concatenation (\n) of multiple lines
-	Affected        string           `yaml:"affected"`
+	Affected string `yaml:"affected"`
+	StartIdx int
+	EndIdx   int
+
 	Threat          float32          `yaml:"threat,omitempty"`
 	Explain         string           `yaml:"explain"`
 	IndepParserRule *IndepParserRule `yaml:"-"`

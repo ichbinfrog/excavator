@@ -2,7 +2,6 @@ package model
 
 import (
 	"bufio"
-	"bytes"
 	"io"
 	"regexp"
 	"strings"
@@ -10,9 +9,9 @@ import (
 
 type pair struct {
 	line     int
-	value    []byte
+	indexes  [4]int
 	threat   float32
-	affected []byte
+	affected string
 }
 
 // KVParser is the base parser structure for a key value file
@@ -27,7 +26,6 @@ type pair struct {
 // 		<value>: \S*
 type kvParser struct {
 	keyBag     *[]string
-	threshold  float32
 	matcher    *regexp.Regexp
 	varMatcher *regexp.Regexp
 }
@@ -48,19 +46,27 @@ func (k *kvParser) Parse(reader io.Reader, leakChan chan Leak, file string, rule
 	buf := bufio.NewScanner(reader)
 	for buf.Scan() {
 		lineNum++
-		line := buf.Bytes()
-		match := k.matcher.FindSubmatch(line)
-		if len(match) <= 2 {
+		line := buf.Text()
+		match := k.matcher.FindStringSubmatchIndex(line)
+		// FindStringSubmatchIndex should return an []int with
+		//	 0     1            2               3              4               5
+		// [ 0 {len(line)} {start idx key} {end idx key} {start idx val} {end idx val} ]
+		if len(match) < 6 || match[2] == -1 || match[4] == -1 {
 			continue
 		}
-		value := bytes.TrimSpace(match[2])
+		value := line[match[4]:match[5]]
 		if len(value) == 0 {
 			continue
 		}
-		pairs[string(match[1])] = pair{
-			value:    match[2],
+		pairs[line[match[2]:match[3]]] = pair{
 			line:     lineNum,
 			affected: line,
+			indexes: [4]int{
+				match[2],
+				match[3],
+				match[4],
+				match[5],
+			},
 		}
 	}
 	for key, pair := range pairs {
@@ -70,24 +76,23 @@ func (k *kvParser) Parse(reader io.Reader, leakChan chan Leak, file string, rule
 				keyword,
 			) {
 				npair := &pair
-				matches := k.varMatcher.FindAllSubmatch(pair.value, -1)
-				innerCalls := 0
+				matches := k.varMatcher.FindAllStringSubmatch(pair.affected[pair.indexes[2]:pair.indexes[3]], -1)
+				innerCall := false
 				for _, match := range matches {
-					if len(match) >= 2 {
+					if len(match) >= 2 || innerCall {
 						for key := range pairs {
-							if strings.Compare(key, string(match[2])) == 0 {
-								innerCalls++
+							if strings.Compare(key, match[2]) == 0 {
+								innerCall = true
 								break
 							}
 						}
 					}
 				}
-				threats := innerCalls
-				if threats == 0 {
+				if innerCall {
 					// Higher threat if the potential leak is hardcoded
-					npair.threat = 1
+					npair.threat = 0.7
 				} else {
-					npair.threat = 0.5
+					npair.threat = 1
 				}
 				pairs[key] = *npair
 				break
@@ -100,6 +105,8 @@ func (k *kvParser) Parse(reader io.Reader, leakChan chan Leak, file string, rule
 				File:          file,
 				Line:          pair.line,
 				Affected:      string(pair.affected),
+				StartIdx:      pair.indexes[0],
+				EndIdx:        pair.indexes[3],
 				Threat:        pair.threat,
 				CtxParserRule: rule,
 			}
@@ -112,7 +119,7 @@ func newEnvParser(keyBag *[]string) *kvParser {
 	return newKVParser(
 		`([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,})`,
 		`=`,
-		`(.*)`,
+		`\s*(.*)\s*`,
 		`\$(\{([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,})\}|([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,}))`,
 		keyBag,
 	)
@@ -123,9 +130,9 @@ func newEnvParser(keyBag *[]string) *kvParser {
 // can be left in the file during developpement cycles
 func newDockerFileParser(keyBag *[]string) *kvParser {
 	return newKVParser(
-		`(ENV|ARGS)\s+([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,})`,
+		`(?:ENV|ARGS)\s+([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,})`,
 		`=?`,
-		`(.*)`,
+		`\s*(.*)\s*`,
 		`\$(\{([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,})\}|([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,}))`,
 		keyBag,
 	)
@@ -136,7 +143,7 @@ func newPropertiesParser(keyBag *[]string) *kvParser {
 	return newKVParser(
 		`([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,})\s*`,
 		`=`,
-		`(.*)`,
+		`\s*(.*)\s*`,
 		`\$(\{([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,})\}|([a-zA-Z_]{1,}[a-zA-Z0-9_]{0,}))`,
 		keyBag,
 	)
