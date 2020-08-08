@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"path/filepath"
+
 	"github.com/ichbinfrog/excavator/pkg/scan"
 	"github.com/rs/zerolog/log"
 
@@ -25,9 +27,9 @@ access tokens (JWT, aws, gcp, ...) leaks.`,
 
 		var s *scan.FsScanner
 		if format == "yaml" {
-			s = scan.NewFsScanner(args[0], rules, &scan.YamlReport{}, true)
+			s = scan.NewFsScanner(filepath.Clean(args[0]), rules, &scan.YamlReport{}, true)
 		} else {
-			s = scan.NewFsScanner(args[0], rules, &scan.HTMLReport{}, true)
+			s = scan.NewFsScanner(filepath.Clean(args[0]), rules, &scan.HTMLReport{}, true)
 		}
 		s.Scan(concurrent)
 	},
