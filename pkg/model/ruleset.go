@@ -115,7 +115,8 @@ func (r *RuleSet) ParsePatch(patch *object.Patch, commit *object.Commit, repo *R
 				lines := strings.Split(chunk.Content(), "\n")
 				for idx, line := range lines {
 					for _, rule := range r.IndepParsers {
-						if rule.Compiled.MatchString(line) {
+						match := rule.Compiled.FindStringIndex(line)
+						if len(match) > 0 {
 							start := idx - contextSize
 							end := idx + contextSize
 							if start < 0 {
@@ -128,6 +129,8 @@ func (r *RuleSet) ParsePatch(patch *object.Patch, commit *object.Commit, repo *R
 								Line:            idx,
 								Affected:        idx - start,
 								File:            to.Path(),
+								StartIdx:        match[0],
+								EndIdx:          match[1],
 								Author:          commit.Author.Name,
 								When:            commit.Author.When,
 								Commit:          to.Hash().String(),

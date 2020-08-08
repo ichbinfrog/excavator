@@ -23,6 +23,8 @@ type GitLeak struct {
 	// without having to store / display the whole file
 	Snippet []string `yaml:"snippet"`
 	// Affected is the index of the offending line in the snippet slice
+	StartIdx int
+	EndIdx   int
 	Affected int `yaml:"affected"`
 
 	// TODO: Threat is an estimation of the product
@@ -51,7 +53,7 @@ type FileLeak struct {
 	// Single offending line
 	// Or a concatenation (\n) of multiple lines
 	Affected        string           `yaml:"affected"`
-	Threat          int              `yaml:"threat,omitempty"`
+	Threat          float32          `yaml:"threat,omitempty"`
 	Explain         string           `yaml:"explain"`
 	IndepParserRule *IndepParserRule `yaml:"-"`
 	CtxParserRule   *CtxParserRule   `yaml:"-"`

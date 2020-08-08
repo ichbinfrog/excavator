@@ -11,7 +11,7 @@ import (
 type pair struct {
 	line     int
 	value    []byte
-	threats  int
+	threat   float32
 	affected []byte
 }
 
@@ -82,9 +82,12 @@ func (k *kvParser) Parse(reader io.Reader, leakChan chan Leak, file string, rule
 						}
 					}
 				}
-				npair.threats = innerCalls
-				if npair.threats == 0 {
-					npair.threats = 1
+				threats := innerCalls
+				if threats == 0 {
+					// Higher threat if the potential leak is hardcoded
+					npair.threat = 1
+				} else {
+					npair.threat = 0.5
 				}
 				pairs[key] = *npair
 				break
@@ -92,12 +95,12 @@ func (k *kvParser) Parse(reader io.Reader, leakChan chan Leak, file string, rule
 		}
 	}
 	for _, pair := range pairs {
-		if pair.threats != 0 {
+		if pair.threat != 0.0 {
 			leakChan <- FileLeak{
 				File:          file,
 				Line:          pair.line,
 				Affected:      string(pair.affected),
-				Threat:        pair.threats,
+				Threat:        pair.threat,
 				CtxParserRule: rule,
 			}
 		}

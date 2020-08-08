@@ -49,8 +49,16 @@ func (h HTMLReport) Write(s Scanner) {
 		log.Fatal().Err(err).Msg("Failed to load static box")
 	}
 
+	funcMap := sprig.FuncMap()
+	funcMap["stringSlice"] = func(s string, i, j int) string {
+		if j == 0 {
+			return s[i:]
+		}
+		return s[i:j]
+	}
+
 	h.Template = template.Must(template.New("report.gohtml").Funcs(
-		sprig.FuncMap(),
+		funcMap,
 	).Parse(report))
 	if err := h.Template.Execute(f, s); err != nil {
 		log.Fatal().
