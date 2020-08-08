@@ -21,7 +21,7 @@ import (
 const (
 	// contextsize is the amount of lines (before and after)
 	// the violating line that will be added to the snippet
-	contextSize = 2
+	contextSize = 4
 )
 
 // RuleSet groups all Rules and Parsers interpreted from the user defined file
