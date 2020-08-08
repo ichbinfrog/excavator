@@ -3,6 +3,7 @@ package model
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"regexp"
@@ -108,4 +109,8 @@ func newJSONParser(keyBag *[]string) *sgmlParser {
 
 func newYAMLParser(keyBag *[]string) *sgmlParser {
 	return newSGMLParser(keyBag, yaml.Unmarshal)
+}
+
+func newXMLParser(keyBag *[]string) *sgmlParser {
+	return newSGMLParser(keyBag, xml.Unmarshal)
 }

@@ -55,6 +55,9 @@ func (c *CtxParserRule) Init() {
 	case "yaml":
 		c.Parser = newYAMLParser(&c.KeyBag)
 		break
+	case "xml":
+		c.Parser = newXMLParser(&c.KeyBag)
+		break
 	default:
 		log.Fatal().
 			Str("parser_type", c.Type).
