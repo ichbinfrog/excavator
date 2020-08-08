@@ -52,6 +52,9 @@ func (h HTMLReport) Write(s Scanner) {
 	funcMap := sprig.FuncMap()
 	funcMap["stringSlice"] = func(s string, i, j int) string {
 		if j == 0 {
+			if i == 0 {
+				return ""
+			}
 			return s[i:]
 		}
 		return s[i:j]

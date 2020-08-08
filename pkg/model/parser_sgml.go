@@ -2,8 +2,10 @@ package model
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -11,16 +13,26 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type yamlParser struct {
-	keyBag *[]string
+type sgmlParser struct {
+	keyBag     *[]string
+	keyMatcher *regexp.Regexp
+	Unmarshal  func([]byte, interface{}) error
 }
 
-func (y *yamlParser) Parse(reader io.Reader, leakChan chan Leak, file string, rule *CtxParserRule) {
+func newSGMLParser(keyBag *[]string, unmarshaller func([]byte, interface{}) error) *sgmlParser {
+	return &sgmlParser{
+		keyBag:     keyBag,
+		keyMatcher: regexp.MustCompile(`"([^\t\n]*)"\s*:`),
+		Unmarshal:  unmarshaller,
+	}
+}
+
+func (s *sgmlParser) Parse(reader io.Reader, leakChan chan Leak, file string, rule *CtxParserRule) {
 	buf := &bytes.Buffer{}
 	buf.ReadFrom(reader)
 	var data interface{}
 
-	if err := yaml.Unmarshal(buf.Bytes(), &data); err != nil {
+	if err := s.Unmarshal(buf.Bytes(), &data); err != nil {
 		log.Trace().
 			Err(err).
 			Str("file", file).
@@ -45,7 +57,7 @@ func (y *yamlParser) Parse(reader io.Reader, leakChan chan Leak, file string, ru
 	}
 
 	for k, v := range flattened {
-		for _, key := range *y.keyBag {
+		for _, key := range *s.keyBag {
 			last := k
 			lastIndex := strings.LastIndex(k, ".")
 			if lastIndex != -1 {
@@ -59,6 +71,8 @@ func (y *yamlParser) Parse(reader io.Reader, leakChan chan Leak, file string, ru
 					File:          file,
 					Line:          0,
 					Affected:      k + ":" + v,
+					StartIdx:      len(k) + 1,
+					EndIdx:        0,
 					CtxParserRule: rule,
 				}
 			}
@@ -87,9 +101,10 @@ func flattenMap(prefix string, value interface{}, res map[string]string) {
 		res[prefix] = fmt.Sprintf("%v", value)
 	}
 }
+func newJSONParser(keyBag *[]string) *sgmlParser {
+	return newSGMLParser(keyBag, json.Unmarshal)
+}
 
-func newYAMLParser(keyBag *[]string) *yamlParser {
-	return &yamlParser{
-		keyBag: keyBag,
-	}
+func newYAMLParser(keyBag *[]string) *sgmlParser {
+	return newSGMLParser(keyBag, yaml.Unmarshal)
 }

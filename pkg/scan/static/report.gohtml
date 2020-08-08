@@ -147,10 +147,13 @@
       <div class="blob-container table-responsive">
         <table class="blob table-hover table-borderless">
           <tbody>
+            {{- $start := . }}
             <tr>
               <td class="blob-num">{{ .Line }}</td>
               <td class="blob-code">
-                {{ .Affected }}
+                {{ stringSlice .Affected 0 $start.StartIdx }}
+                <strong>{{- stringSlice .Affected $start.StartIdx $start.EndIdx }}</strong>
+                {{- stringSlice .Affected $start.EndIdx 0 }}
               </td>
             </tr>
           </tbody>

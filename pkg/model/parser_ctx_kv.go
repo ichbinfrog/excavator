@@ -105,7 +105,7 @@ func (k *kvParser) Parse(reader io.Reader, leakChan chan Leak, file string, rule
 				File:          file,
 				Line:          pair.line,
 				Affected:      string(pair.affected),
-				StartIdx:      pair.indexes[0],
+				StartIdx:      pair.indexes[2],
 				EndIdx:        pair.indexes[3],
 				Threat:        pair.threat,
 				CtxParserRule: rule,

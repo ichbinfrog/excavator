@@ -179,9 +179,13 @@ func (r *RuleSet) ParseFile(file string, leakChan chan Leak) {
 			continue
 		}
 		for _, rule := range r.IndepParsers {
-			if rule.Compiled.MatchString(line) {
+			match := rule.Compiled.FindStringIndex(line)
+
+			if len(match) > 0 {
 				leakChan <- FileLeak{
 					File:            file,
+					StartIdx:        match[0],
+					EndIdx:          match[1],
 					Line:            lineNum,
 					Affected:        line,
 					IndepParserRule: &rule,
