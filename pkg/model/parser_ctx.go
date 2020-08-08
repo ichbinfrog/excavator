@@ -21,6 +21,7 @@ type CtxParserRule struct {
 	Type       string        `yaml:"type"`
 	Extensions []string      `yaml:"extensions"`
 	KeyBag     []string      `yaml:"keys"`
+	Confidence string        `yaml:"confidence"`
 }
 
 // Init creates a Parser if the .Type is defined

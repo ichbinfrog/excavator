@@ -143,6 +143,7 @@
       {{ .Commit }}
       <span class="badge badge-danger badge-pill">R</span></h5>
       <p class="card-text">Author: {{ .Author }}    |   At: {{ .When | date "2006-01-02 15:04:05"}}</p>
+      <p class="card-text">Confidence : {{ .Confidence }}</p>
       <div class="blob-container table-responsive">
         <table class="blob table-hover table-borderless">
           <tbody>
@@ -167,6 +168,7 @@
         {{- end }}
         {{ .File }}
       </h5>
+      <p class="card-text">Confidence : {{ .Confidence }}</p>
       <div class="blob-container table-responsive">
         <table class="blob table-hover table-borderless">
           <tbody>

@@ -76,6 +76,7 @@ func (s *sgmlParser) Parse(reader io.Reader, leakChan chan Leak, file string, ru
 					StartIdx:      len(k) + 1,
 					EndIdx:        0,
 					CtxParserRule: rule,
+					Confidence:    "High",
 				}
 			}
 		}

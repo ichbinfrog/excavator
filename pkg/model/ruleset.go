@@ -196,6 +196,7 @@ func (r *RuleSet) ParseFile(file string, leakChan chan Leak) {
 					Line:            idx,
 					Affected:        idx - start,
 					IndepParserRule: &rule,
+					Confidence:      "Low",
 				}
 				disc.Snippet = make([]string, len(lines[start:end]))
 				copy(disc.Snippet, lines[start:end])

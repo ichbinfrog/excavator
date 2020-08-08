@@ -8,10 +8,10 @@ import (
 )
 
 type pair struct {
-	line     int
-	indexes  [4]int
-	threat   float32
-	affected string
+	line       int
+	indexes    [4]int
+	confidence string
+	affected   string
 }
 
 // KVParser is the base parser structure for a key value file
@@ -90,9 +90,9 @@ func (k *kvParser) Parse(reader io.Reader, leakChan chan Leak, file string, rule
 				}
 				if innerCall {
 					// Higher threat if the potential leak is hardcoded
-					npair.threat = 0.7
+					npair.confidence = "High"
 				} else {
-					npair.threat = 1
+					npair.confidence = "Medium"
 				}
 				pairs[key] = *npair
 				break
@@ -100,7 +100,7 @@ func (k *kvParser) Parse(reader io.Reader, leakChan chan Leak, file string, rule
 		}
 	}
 	for _, pair := range pairs {
-		if pair.threat != 0.0 {
+		if pair.confidence != "" {
 			leakChan <- FileLeak{
 				File:          file,
 				Line:          pair.line,
@@ -108,8 +108,8 @@ func (k *kvParser) Parse(reader io.Reader, leakChan chan Leak, file string, rule
 				Affected:      0,
 				StartIdx:      pair.indexes[2],
 				EndIdx:        pair.indexes[3],
-				Threat:        pair.threat,
 				CtxParserRule: rule,
+				Confidence:    pair.confidence,
 			}
 		}
 	}
