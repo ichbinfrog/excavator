@@ -1,7 +1,6 @@
 package model
 
 import (
-	"archive/tar"
 	"bytes"
 	"encoding/hex"
 	"hash/fnv"
@@ -17,6 +16,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/format/diff"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/gobuffalo/packr/v2"
+	"github.com/mholt/archiver/v3"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 )
@@ -98,7 +98,7 @@ func (r *RuleSet) ParseConfig(file string) {
 	}
 
 	// Build regex for matching compressed file format
-	r.CompressedMatcher = regexp.MustCompile(`tar`)
+	r.CompressedMatcher = regexp.MustCompile(`tar|zip`)
 }
 
 // ParsePatch iterates over each chunk of the patch object
@@ -160,31 +160,13 @@ func (r *RuleSet) ParsePatch(patch *object.Patch, commit *object.Commit, repo *R
 }
 
 func (r *RuleSet) parseArchive(file *os.File, leakChan chan Leak) {
-	// Parse compressed files
-	tarReader := tar.NewReader(file)
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			break
+	if err := archiver.Walk(file.Name(), func(f archiver.File) error {
+		if f.Mode().IsRegular() {
+			r.parseRegular(f, path.Join(file.Name(), f.Name()), leakChan)
 		}
-
-		if err != nil {
-			log.Trace().
-				Str("file", file.Name()).
-				Err(err).
-				Msg("Failed to read tar header")
-			break
-		}
-
-		switch header.Typeflag {
-		case tar.TypeDir:
-			continue
-		case tar.TypeReg:
-			r.parseRegular(tarReader, path.Join(file.Name(), header.Name), leakChan)
-			break
-		default:
-			break
-		}
+		return nil
+	}); err != nil {
+		log.Error().Str("file", file.Name()).Err(err).Msg("Failed to read archive")
 	}
 }
 
