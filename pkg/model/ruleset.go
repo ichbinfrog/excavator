@@ -1,11 +1,14 @@
 package model
 
 import (
+	"archive/tar"
 	"bytes"
 	"encoding/hex"
 	"hash/fnv"
+	"io"
 	"io/ioutil"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -45,6 +48,10 @@ type RuleSet struct {
 	CtxParsers        []CtxParserRule   `yaml:"parsers"`
 	BlackList         []string          `yaml:"black_list"`
 	BlackListCompiled []*regexp.Regexp  `yaml:"-"`
+
+	// Sets whether or not to examine compressed files
+	Compressed        bool           `yaml:"compressed"`
+	CompressedMatcher *regexp.Regexp `yaml:"-"`
 }
 
 // ParseConfig reads the user defined configuration file
@@ -89,6 +96,9 @@ func (r *RuleSet) ParseConfig(file string) {
 	for _, bl := range r.BlackList {
 		r.BlackListCompiled = append(r.BlackListCompiled, regexp.MustCompile(bl))
 	}
+
+	// Build regex for matching compressed file format
+	r.CompressedMatcher = regexp.MustCompile(`tar`)
 }
 
 // ParsePatch iterates over each chunk of the patch object
@@ -149,29 +159,48 @@ func (r *RuleSet) ParsePatch(patch *object.Patch, commit *object.Commit, repo *R
 	}
 }
 
-// ParseFile reads a given file and applies all rules given
-func (r *RuleSet) ParseFile(file string, leakChan chan Leak) {
-	fd, err := os.Open(file)
-	if err != nil {
-		log.Trace().
-			Str("file", file).
-			Err(err).
-			Msg("Failed to read")
-		return
-	}
-	defer fd.Close()
+func (r *RuleSet) parseArchive(file *os.File, leakChan chan Leak) {
+	// Parse compressed files
+	tarReader := tar.NewReader(file)
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
 
+		if err != nil {
+			log.Trace().
+				Str("file", file.Name()).
+				Err(err).
+				Msg("Failed to read tar header")
+			break
+		}
+
+		switch header.Typeflag {
+		case tar.TypeDir:
+			continue
+		case tar.TypeReg:
+			r.parseRegular(tarReader, path.Join(file.Name(), header.Name), leakChan)
+			break
+		default:
+			break
+		}
+	}
+}
+
+func (r *RuleSet) parseRegular(file io.Reader, filename string, leakChan chan Leak) {
+	// Check for blacklisted file names
 	for _, rule := range r.CtxParsers {
 		for _, ext := range rule.Extensions {
-			if strings.HasSuffix(file, ext) {
-				rule.Parser.Parse(fd, leakChan, file, &rule)
+			if strings.HasSuffix(filename, ext) {
+				rule.Parser.Parse(file, leakChan, filename, &rule)
 				return
 			}
 		}
 	}
 
 	buf := &bytes.Buffer{}
-	buf.ReadFrom(fd)
+	buf.ReadFrom(file)
 	lines := strings.Split(buf.String(), "\n")
 	for idx, line := range lines {
 		if !utf8.ValidString(line) {
@@ -190,7 +219,7 @@ func (r *RuleSet) ParseFile(file string, leakChan chan Leak) {
 					end = len(lines) - 1
 				}
 				disc := FileLeak{
-					File:            file,
+					File:            filename,
 					StartIdx:        match[0],
 					EndIdx:          match[1],
 					Line:            idx,
@@ -204,5 +233,25 @@ func (r *RuleSet) ParseFile(file string, leakChan chan Leak) {
 				break
 			}
 		}
+	}
+}
+
+// Parse reads a given file and applies all rules given
+func (r *RuleSet) Parse(file string, leakChan chan Leak) {
+	fd, err := os.Open(file)
+	if err != nil {
+		log.Trace().
+			Str("file", file).
+			Err(err).
+			Msg("Failed to read")
+		return
+	}
+	defer fd.Close()
+
+	if r.Compressed && r.CompressedMatcher.MatchString(file) {
+		// Parse archives
+		r.parseArchive(fd, leakChan)
+	} else {
+		r.parseRegular(fd, file, leakChan)
 	}
 }
