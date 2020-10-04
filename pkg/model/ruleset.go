@@ -50,8 +50,7 @@ type RuleSet struct {
 	BlackListCompiled []*regexp.Regexp  `yaml:"-"`
 
 	// Sets whether or not to examine compressed files
-	Compressed        bool           `yaml:"compressed"`
-	CompressedMatcher *regexp.Regexp `yaml:"-"`
+	Compressed bool `yaml:"compressed"`
 }
 
 // ParseConfig reads the user defined configuration file
@@ -96,9 +95,6 @@ func (r *RuleSet) ParseConfig(file string) {
 	for _, bl := range r.BlackList {
 		r.BlackListCompiled = append(r.BlackListCompiled, regexp.MustCompile(bl))
 	}
-
-	// Build regex for matching compressed file format
-	r.CompressedMatcher = regexp.MustCompile(`tar|zip`)
 }
 
 // ParsePatch iterates over each chunk of the patch object
@@ -230,7 +226,8 @@ func (r *RuleSet) Parse(file string, leakChan chan Leak) {
 	}
 	defer fd.Close()
 
-	if r.Compressed && r.CompressedMatcher.MatchString(file) {
+	_, err = archiver.ByExtension(file)
+	if r.Compressed && err == nil {
 		// Parse archives
 		r.parseArchive(fd, leakChan)
 	} else {
