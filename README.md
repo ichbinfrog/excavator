@@ -26,13 +26,7 @@ excavator fs <path> [flags]
 
 ### Global Flags
 
-- `-v` , `--verbosity <int>` : logging verbosity:
-  - 0: Fatal 
-  - 1: Error
-  - 2: Warning 
-  - 3: Info (default) 
-  - 4: Debug 
-  - 5: Trace
+- `-v` , `-vv`, `-vvv` : set verbosity levels
 
 Scanning a repository without backend
 ```sh
