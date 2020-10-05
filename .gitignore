@@ -20,3 +20,5 @@ tests/*
 .env
 excavator*
 index.html
+
+css/index_files
