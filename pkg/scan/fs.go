@@ -102,9 +102,9 @@ func (f *FsScanner) Scan(concurrent int) {
 		f.ProgressBar = progressbar.Default(int64(len(files)), " scanning files")
 	}
 
-	// Divide the commit structure into equal size chunks
+	// Divide the file list into equal size chunks
 	// and for each chunk launch a go routine that analyses
-	// each commit sequentially for rule breaks.
+	// each file sequentially for rule breaks.
 	var wg sync.WaitGroup
 	res := make([][]model.Leak, concurrent+1)
 
@@ -140,10 +140,10 @@ func (f *FsScanner) Scan(concurrent int) {
 func (f FsScanner) scanChunk(j, e int, files []string, leakChan chan model.Leak, doneChan chan bool) {
 	log.Trace().
 		Int("start_file", j).
-		Int("end_file", e-1).
+		Int("end_file", e).
 		Msg("Routine launched")
-	for _, file := range files[j : e-1] {
-		f.RuleSet.ParseFile(file, leakChan)
+	for _, file := range files[j:e] {
+		f.RuleSet.Parse(file, leakChan)
 		if f.Debug {
 			f.ProgressBar.Add(1)
 		}

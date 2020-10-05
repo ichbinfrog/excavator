@@ -81,10 +81,11 @@ parsers:
       - "private"
 
 black_list:
-  - .*\.tar|zip|gz
   - .*\.sample.*
   - .*\.svg|png|jpg|jpeg|pdf
   - .*\.git.*
   - '.*\.exe'
   - '.*amd64'
   - '.*\.csv'
+
+compressed: True

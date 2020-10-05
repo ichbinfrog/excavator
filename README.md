@@ -116,4 +116,8 @@ parsers:
       - "Dockerfile"
     # keys defaults to 
     # ["pass", "host", "proxy", "key"] if not defined
+
+# Whether or not to explore files that are in archives
+# e.g. tar, gzip, zip, rar...
+compressed: True
 ```

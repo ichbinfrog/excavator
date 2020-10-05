@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/hex"
 	"hash/fnv"
+	"io"
 	"io/ioutil"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -14,6 +16,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/format/diff"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/gobuffalo/packr/v2"
+	"github.com/mholt/archiver/v3"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 )
@@ -45,6 +48,9 @@ type RuleSet struct {
 	CtxParsers        []CtxParserRule   `yaml:"parsers"`
 	BlackList         []string          `yaml:"black_list"`
 	BlackListCompiled []*regexp.Regexp  `yaml:"-"`
+
+	// Sets whether or not to examine compressed files
+	Compressed bool `yaml:"compressed"`
 }
 
 // ParseConfig reads the user defined configuration file
@@ -149,29 +155,30 @@ func (r *RuleSet) ParsePatch(patch *object.Patch, commit *object.Commit, repo *R
 	}
 }
 
-// ParseFile reads a given file and applies all rules given
-func (r *RuleSet) ParseFile(file string, leakChan chan Leak) {
-	fd, err := os.Open(file)
-	if err != nil {
-		log.Trace().
-			Str("file", file).
-			Err(err).
-			Msg("Failed to read")
-		return
+func (r *RuleSet) parseArchive(file *os.File, leakChan chan Leak) {
+	if err := archiver.Walk(file.Name(), func(f archiver.File) error {
+		if f.Mode().IsRegular() {
+			r.parseRegular(f, path.Join(file.Name(), f.Name()), leakChan)
+		}
+		return nil
+	}); err != nil {
+		log.Error().Str("file", file.Name()).Err(err).Msg("Failed to read archive")
 	}
-	defer fd.Close()
+}
 
+func (r *RuleSet) parseRegular(file io.Reader, filename string, leakChan chan Leak) {
+	// Check for blacklisted file names
 	for _, rule := range r.CtxParsers {
 		for _, ext := range rule.Extensions {
-			if strings.HasSuffix(file, ext) {
-				rule.Parser.Parse(fd, leakChan, file, &rule)
+			if strings.HasSuffix(filename, ext) {
+				rule.Parser.Parse(file, leakChan, filename, &rule)
 				return
 			}
 		}
 	}
 
 	buf := &bytes.Buffer{}
-	buf.ReadFrom(fd)
+	buf.ReadFrom(file)
 	lines := strings.Split(buf.String(), "\n")
 	for idx, line := range lines {
 		if !utf8.ValidString(line) {
@@ -190,7 +197,7 @@ func (r *RuleSet) ParseFile(file string, leakChan chan Leak) {
 					end = len(lines) - 1
 				}
 				disc := FileLeak{
-					File:            file,
+					File:            filename,
 					StartIdx:        match[0],
 					EndIdx:          match[1],
 					Line:            idx,
@@ -204,5 +211,26 @@ func (r *RuleSet) ParseFile(file string, leakChan chan Leak) {
 				break
 			}
 		}
+	}
+}
+
+// Parse reads a given file and applies all rules given
+func (r *RuleSet) Parse(file string, leakChan chan Leak) {
+	fd, err := os.Open(file)
+	if err != nil {
+		log.Trace().
+			Str("file", file).
+			Err(err).
+			Msg("Failed to read")
+		return
+	}
+	defer fd.Close()
+
+	_, err = archiver.ByExtension(file)
+	if r.Compressed && err == nil {
+		// Parse archives
+		r.parseArchive(fd, leakChan)
+	} else {
+		r.parseRegular(fd, file, leakChan)
 	}
 }
